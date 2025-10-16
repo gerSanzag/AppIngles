@@ -18,8 +18,6 @@ const App = {
         this.loadData();
         this.setupEventListeners();
         this.updateUI();
-        this.updateApiStatus();
-        this.setupSmartInputDetection();
     },
     
     // Load data from localStorage
@@ -66,38 +64,58 @@ const App = {
     
     // Setup event listeners
     setupEventListeners() {
-        // Add word functionality
-        // Single word translation
-        const singleWordInput = document.getElementById('single-word-input');
-        const translateBtn = document.getElementById('translate-btn');
-        const addSingleBtn = document.getElementById('add-single-btn');
+        // Manual word input
+        const spanishWordInput = document.getElementById('spanish-word-input');
+        const englishWordInput = document.getElementById('english-word-input');
+        const addManualWordBtn = document.getElementById('add-manual-word-btn');
         
-        if (singleWordInput && translateBtn) {
-            translateBtn.addEventListener('click', () => this.translateSingleWord());
-            singleWordInput.addEventListener('keypress', (e) => {
+        if (addManualWordBtn) {
+            addManualWordBtn.addEventListener('click', () => this.addManualWord());
+        }
+        
+        // Enter key support for both inputs
+        if (spanishWordInput) {
+            spanishWordInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    this.translateSingleWord();
+                    this.addManualWord();
                 }
             });
         }
         
-        if (addSingleBtn) {
-            addSingleBtn.addEventListener('click', () => this.addSingleWord());
-        }
-        
-        // Word pair input
-        const wordPairInput = document.getElementById('word-pair-input');
-        const addPairBtn = document.getElementById('add-pair-btn');
-        
-        if (wordPairInput && addPairBtn) {
-            addPairBtn.addEventListener('click', () => this.addWordPairDirect());
-            wordPairInput.addEventListener('keypress', (e) => {
+        if (englishWordInput) {
+            englishWordInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    this.addWordPairDirect();
+                    this.addManualWord();
                 }
             });
+        }
+        
+        // Word list functionality
+        const addListBtn = document.getElementById('add-list-btn');
+        if (addListBtn) {
+            addListBtn.addEventListener('click', () => this.addWordList());
+        }
+        
+        const clearListBtn = document.getElementById('clear-list-btn');
+        if (clearListBtn) {
+            clearListBtn.addEventListener('click', () => this.clearWordList());
+        }
+        
+        // File upload functionality
+        const fileInput = document.getElementById('file-input');
+        const fileSelectBtn = document.getElementById('file-select-btn');
+        const fileNameSpan = document.getElementById('file-name');
+        
+        if (fileSelectBtn && fileInput) {
+            fileSelectBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+        
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         }
         
         // Search functionality
@@ -136,17 +154,12 @@ const App = {
             wordListTextarea.addEventListener('input', () => this.handleWordListImport());
         }
         
-        // Word list buttons
-        const translateListBtn = document.querySelector('.import-section .btn-translate');
-        const addListBtn = document.querySelector('.import-section .btn-add');
-        
-        if (translateListBtn) {
-            translateListBtn.addEventListener('click', () => this.translateWordList());
+        // Delete all words functionality
+        const deleteAllBtn = document.getElementById('delete-all-btn');
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', () => this.deleteAllWords());
         }
         
-        if (addListBtn) {
-            addListBtn.addEventListener('click', () => this.addWordList());
-        }
     },
     
     // Handle word input
@@ -196,13 +209,16 @@ const App = {
         }
     },
     
-    // Add a new word
-    async addWord() {
-        const wordInput = document.getElementById('word-input');
-        const input = wordInput.value.trim();
+    // Add manual word (Spanish - English)
+    async addManualWord() {
+        const spanishInput = document.getElementById('spanish-word-input');
+        const englishInput = document.getElementById('english-word-input');
         
-        if (!input) {
-            this.showNotification('Please enter a word or phrase', 'error');
+        const spanish = spanishInput.value.trim();
+        const english = englishInput.value.trim();
+        
+        if (!spanish || !english) {
+            this.showNotification('Please enter both Spanish and English words', 'error');
             return;
         }
         
@@ -211,117 +227,259 @@ const App = {
             return;
         }
         
-        // Check if input is a word pair
-        const inputType = this.parseInput(input);
+        // Check if word pair already exists
+        const existingWord = this.words.find(w => 
+            (w.originalText.toLowerCase() === english.toLowerCase() && 
+             w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
+            (w.originalText.toLowerCase() === spanish.toLowerCase() && 
+             w.translatedText.toLowerCase() === english.toLowerCase())
+        );
         
-        if (inputType.type === 'pair') {
-            // Handle word pair directly (no translation needed)
-            await this.addWordPair();
+        if (existingWord) {
+            this.showNotification('This word pair already exists', 'info');
             return;
         }
         
-        // Handle single word (needs translation)
-        if (!TranslateService.hasApiKey()) {
-            this.showNotification('Please configure API Key first. Click "SETUP API KEY" button.', 'error');
-            return;
-        }
+        // Add the word pair (English as original, Spanish as translation)
+        const newWord = {
+            id: Date.now() + Math.random(),
+            originalText: english,
+            translatedText: spanish,
+            detectedLanguage: 'en',
+            databaseId: this.currentDatabase,
+            score: 0,
+            attempts: 0,
+            lastPracticed: null,
+            createdAt: new Date().toISOString(),
+            counter: 0  // Independent counter for each record
+        };
         
-        try {
-            this.showNotification('Translating and adding word...', 'info');
-            
-            const translations = await TranslateService.getMultipleTranslations(input);
-            
-            if (!translations || translations.length === 0) {
-                this.showNotification('No translation found', 'error');
-                return;
-            }
-            
-            // Display translations first
-            this.displayTranslations(translations);
-            
-            let addedCount = 0;
-            let skippedCount = 0;
-            
-            // Add each translation as a separate word
-            for (const translation of translations) {
-                // Check if this specific translation already exists
-                const existingWord = this.words.find(w => 
-                    w.originalText.toLowerCase() === input.toLowerCase() && 
-                    w.translatedText.toLowerCase() === translation.text.toLowerCase() &&
-                    w.databaseId === this.currentDatabase
-                );
-                
-                if (!existingWord) {
-                    const newWord = {
-                        id: Date.now() + Math.random(),
-                        originalText: input,
-                        translatedText: translation.text,
-                        detectedLanguage: translation.detectedSourceLanguage,
-                        databaseId: this.currentDatabase,
-                        score: 0,
-                        attempts: 0,
-                        lastPracticed: null,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    this.words.push(newWord);
-                    addedCount++;
-                } else {
-                    skippedCount++;
-                }
-            }
-            
-            this.saveData();
-            this.updateUI();
-            
-            if (addedCount > 0) {
-                this.showNotification(
-                    `Word added successfully! ${addedCount} translations added, ${skippedCount} skipped.`, 
-                    'success'
-                );
-            } else {
-                this.showNotification('All translations already exist', 'info');
-            }
-            
-        } catch (error) {
-            console.error('Add word error:', error);
-            this.showNotification('Failed to add word: ' + error.message, 'error');
-        }
+        this.words.push(newWord);
+        this.saveData();
+        this.updateUI();
+        
+        // Clear inputs
+        spanishInput.value = '';
+        englishInput.value = '';
+        
+        this.showNotification('Word pair added successfully!', 'success');
     },
     
-    // Translate word using Google Translate
-    async translateWord() {
-        const wordInput = document.getElementById('word-input');
-        const word = wordInput.value.trim();
+    // Add word list (bulk import)
+    async addWordList() {
+        const wordListTextarea = document.getElementById('word-list');
+        const wordListText = wordListTextarea.value.trim();
         
-        if (!word) {
-            this.showNotification('Please enter a word to translate', 'error');
+        if (!wordListText) {
+            this.showNotification('Please enter word pairs in the list', 'error');
             return;
         }
         
-        // Check if API key is set
-        if (!TranslateService.hasApiKey()) {
-            this.showNotification('Google Translate API key required. Click "SETUP API KEY" to configure.', 'error');
+        if (!this.currentDatabase) {
+            this.showNotification('Please select a database first', 'error');
             return;
         }
         
-        try {
-            this.showNotification('Translating...', 'info');
+        // Split by lines and process each line
+        const lines = wordListText.split('\n').filter(line => line.trim() !== '');
+        
+        if (lines.length === 0) {
+            this.showNotification('No valid word pairs found', 'error');
+            return;
+        }
+        
+        let addedCount = 0;
+        let skippedCount = 0;
+        let errorCount = 0;
+        
+        this.showNotification(`Processing ${lines.length} word pairs...`, 'info');
+        
+        for (const line of lines) {
+            const trimmedLine = line.trim();
             
-            const translations = await TranslateService.getMultipleTranslations(word);
-            
-            if (translations && translations.length > 0) {
-                this.displayTranslations(translations);
-                this.showNotification('Translation completed!', 'success');
-            } else {
-                this.showNotification('No translation found', 'error');
+            // Check if line contains the separator
+            if (!trimmedLine.includes(' - ')) {
+                errorCount++;
+                continue;
             }
             
-        } catch (error) {
-            console.error('Translation error:', error);
-            this.showNotification('Translation failed: ' + error.message, 'error');
+            // Split by separator
+            const parts = trimmedLine.split(' - ');
+            if (parts.length !== 2) {
+                errorCount++;
+                continue;
+            }
+            
+            const spanish = parts[0].trim();
+            const english = parts[1].trim();
+            
+            if (!spanish || !english) {
+                errorCount++;
+                continue;
+            }
+            
+            // Check if word pair already exists
+            const existingWord = this.words.find(w => 
+                (w.originalText.toLowerCase() === english.toLowerCase() && 
+                 w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
+                (w.originalText.toLowerCase() === spanish.toLowerCase() && 
+                 w.translatedText.toLowerCase() === english.toLowerCase())
+            );
+            
+            if (existingWord) {
+                skippedCount++;
+                continue;
+            }
+            
+            // Add the word pair
+            const newWord = {
+                id: Date.now() + Math.random() + Math.random(), // Extra randomness for bulk
+                originalText: english,
+                translatedText: spanish,
+                detectedLanguage: 'en',
+                databaseId: this.currentDatabase,
+                score: 0,
+                attempts: 0,
+                lastPracticed: null,
+                createdAt: new Date().toISOString(),
+                counter: 0  // Independent counter for each record
+            };
+            
+            this.words.push(newWord);
+            addedCount++;
         }
+        
+        // Save data and update UI
+        this.saveData();
+        this.updateUI();
+        
+        // Clear the textarea
+        wordListTextarea.value = '';
+        
+        // Show results
+        let message = `Word list processed! Added: ${addedCount}`;
+        if (skippedCount > 0) message += `, Skipped: ${skippedCount}`;
+        if (errorCount > 0) message += `, Errors: ${errorCount}`;
+        
+        this.showNotification(message, addedCount > 0 ? 'success' : 'info');
     },
+    
+    // Handle file selection and load content
+    handleFileSelect(event) {
+        const file = event.target.files[0];
+        const fileNameSpan = document.getElementById('file-name');
+        const wordListTextarea = document.getElementById('word-list');
+        
+        if (!file) {
+            fileNameSpan.textContent = 'No file selected';
+            fileNameSpan.classList.remove('has-file');
+            return;
+        }
+        
+        // Get file extension
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        // Check for unsupported file types first
+        if (['pdf', 'doc', 'docx'].includes(fileExtension)) {
+            this.showNotification(`❌ ${fileExtension.toUpperCase()} files cannot be read as text. Please copy the content to a .txt file first.`, 'error');
+            fileNameSpan.textContent = `${fileExtension.toUpperCase()} not supported`;
+            fileNameSpan.classList.remove('has-file');
+            // Clear textarea
+            wordListTextarea.value = '';
+            // Reset file input
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate supported file types
+        const supportedExtensions = ['txt', 'csv', 'md', 'rtf'];
+        
+        if (!supportedExtensions.includes(fileExtension)) {
+            this.showNotification('Please select a supported file type (.txt, .csv, .md, .rtf)', 'error');
+            fileNameSpan.textContent = 'Invalid file type';
+            fileNameSpan.classList.remove('has-file');
+            return;
+        }
+        
+        // Update UI to show selected file
+        fileNameSpan.textContent = file.name;
+        fileNameSpan.classList.add('has-file');
+        
+        // Read file content
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            try {
+                let content = e.target.result;
+                
+                // Clean content for better parsing
+                content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                
+                // Validate content format
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                let validLines = 0;
+                
+                for (const line of lines) {
+                    if (line.includes(' - ')) {
+                        const parts = line.split(' - ');
+                        if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+                            validLines++;
+                        }
+                    }
+                }
+                
+                if (validLines === 0) {
+                    this.showNotification('No valid word pairs found in the file. Format: Spanish - English', 'error');
+                    fileNameSpan.textContent = 'Invalid format';
+                    fileNameSpan.classList.remove('has-file');
+                    return;
+                }
+                
+                // Load content into textarea
+                wordListTextarea.value = content;
+                
+                this.showNotification(`File loaded successfully! Found ${validLines} valid word pairs.`, 'success');
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                this.showNotification('Error reading file. Please try again.', 'error');
+                fileNameSpan.textContent = 'Error reading file';
+                fileNameSpan.classList.remove('has-file');
+            }
+        };
+        
+        reader.onerror = () => {
+            this.showNotification('Error reading file. Please try again.', 'error');
+            fileNameSpan.textContent = 'Error reading file';
+            fileNameSpan.classList.remove('has-file');
+        };
+        
+        // Read file as text
+        reader.readAsText(file);
+    },
+    
+    // Clear word list
+    clearWordList() {
+        const wordListTextarea = document.getElementById('word-list');
+        const fileNameSpan = document.getElementById('file-name');
+        const fileInput = document.getElementById('file-input');
+        
+        if (wordListTextarea) {
+            wordListTextarea.value = '';
+        }
+        
+        if (fileNameSpan) {
+            fileNameSpan.textContent = 'No file selected';
+            fileNameSpan.classList.remove('has-file');
+        }
+        
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        this.showNotification('Word list cleared successfully!', 'success');
+    },
+    
     
     // Display translations in the UI
     displayTranslations(translations) {
@@ -376,9 +534,12 @@ const App = {
         const wordsContainer = document.querySelector('.words-container');
         if (!wordsContainer) return;
         
+        // Filter words by current database and search query
         const filteredWords = this.words.filter(word => 
-            word.english.toLowerCase().includes(query.toLowerCase()) ||
-            word.spanish.toLowerCase().includes(query.toLowerCase())
+            word.databaseId === this.currentDatabase && (
+                word.originalText.toLowerCase().includes(query.toLowerCase()) ||
+                word.translatedText.toLowerCase().includes(query.toLowerCase())
+            )
         );
         
         this.displayWords(filteredWords);
@@ -397,22 +558,35 @@ const App = {
             return;
         }
         
-        const wordsHTML = wordsToShow.map(word => `
-            <div class="word-card">
-                <div class="word-content">
-                    <div class="word-original">${word.originalText}</div>
-                    <div class="word-translation">${word.translatedText}</div>
-                    <div class="word-language">${word.detectedLanguage}</div>
-                </div>
-                <div class="word-actions">
-                    <button class="word-btn edit" onclick="App.editWord('${word.id}')">Edit</button>
-                    <button class="word-btn delete" onclick="App.deleteWord('${word.id}')">Delete</button>
-                    <button class="word-btn learned" onclick="App.markAsLearned('${word.id}')">Mark Learned</button>
-                </div>
-            </div>
-        `).join('');
+        // Create a table format
+        const wordsHTML = `
+            <table class="words-table">
+                <thead>
+                    <tr>
+                        <th>Spanish</th>
+                        <th>English</th>
+                        <th>Points</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${wordsToShow.map((word) => `
+                        <tr class="word-row">
+                            <td class="spanish-word">${word.originalText}</td>
+                            <td class="english-word">${word.translatedText}</td>
+                            <td class="points-cell">
+                                <span class="points-value">${word.counter || 0}</span>
+                            </td>
+                            <td class="action-cell">
+                                <button class="delete-btn" onclick="App.deleteWord('${word.id}')">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
         
-        wordsContainer.innerHTML = `<div class="words-list">${wordsHTML}</div>`;
+        wordsContainer.innerHTML = wordsHTML;
     },
     
     // Edit word
@@ -432,12 +606,36 @@ const App = {
     // Delete word
     deleteWord(wordId) {
         if (confirm('Are you sure you want to delete this word?')) {
-            this.words = this.words.filter(w => w.id !== wordId);
+            // Convert wordId to number for proper comparison
+            const idToDelete = parseFloat(wordId);
+            this.words = this.words.filter(w => w.id !== idToDelete);
             this.saveData();
             this.updateUI();
             this.showNotification('Word deleted successfully!', 'success');
         }
     },
+    
+    // Delete all words from current database
+    deleteAllWords() {
+        if (!this.currentDatabase) {
+            this.showNotification('Please select a database first', 'error');
+            return;
+        }
+        
+        const wordsInDatabase = this.words.filter(word => word.databaseId === this.currentDatabase);
+        if (wordsInDatabase.length === 0) {
+            this.showNotification('No words to delete in this database', 'info');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete ALL ${wordsInDatabase.length} words from this database? This action cannot be undone.`)) {
+            this.words = this.words.filter(word => word.databaseId !== this.currentDatabase);
+            this.saveData();
+            this.updateUI();
+            this.showNotification(`All ${wordsInDatabase.length} words deleted successfully!`, 'success');
+        }
+    },
+    
     
     // Mark word as learned
     markAsLearned(wordId) {
@@ -736,27 +934,6 @@ const App = {
         learnedContent.innerHTML = `<div class="learned-words-list">${learnedHTML}</div>`;
     },
     
-    // Setup API Key
-    setupApiKey() {
-        if (TranslateService.showApiKeyDialog()) {
-            this.updateApiStatus();
-            this.showNotification('API Key configured successfully!', 'success');
-        }
-    },
-    
-    // Update API status display
-    updateApiStatus() {
-        const apiStatus = document.getElementById('api-status');
-        if (apiStatus) {
-            if (TranslateService.hasApiKey()) {
-                apiStatus.textContent = '✅ API Key configured';
-                apiStatus.style.color = '#28a745';
-            } else {
-                apiStatus.textContent = '❌ API Key not configured';
-                apiStatus.style.color = '#dc3545';
-            }
-        }
-    },
     
     // Show notification
     showNotification(message, type = 'info') {
@@ -785,366 +962,7 @@ const App = {
         }, 3000);
     },
     
-    // ===== SMART INPUT DETECTION SYSTEM =====
     
-    // Setup smart input detection
-    setupSmartInputDetection() {
-        const singleWordInput = document.getElementById('single-word-input');
-        const wordPairInput = document.getElementById('word-pair-input');
-        
-        if (singleWordInput) {
-            singleWordInput.addEventListener('input', () => {
-                this.updateSingleWordUI();
-            });
-        }
-        
-        if (wordPairInput) {
-            wordPairInput.addEventListener('input', () => {
-                this.updateWordPairUI();
-            });
-        }
-        
-        // Initial setup
-        this.updateSingleWordUI();
-        this.updateWordPairUI();
-    },
-    
-    // Update single word UI
-    updateSingleWordUI() {
-        const singleWordInput = document.getElementById('single-word-input');
-        const translateBtn = document.getElementById('translate-btn');
-        const addSingleBtn = document.getElementById('add-single-btn');
-        
-        if (!singleWordInput || !translateBtn || !addSingleBtn) return;
-        
-        const input = singleWordInput.value.trim();
-        
-        if (input) {
-            translateBtn.disabled = false;
-            addSingleBtn.disabled = false;
-        } else {
-            translateBtn.disabled = true;
-            addSingleBtn.disabled = true;
-        }
-    },
-    
-    // Update word pair UI
-    updateWordPairUI() {
-        const wordPairInput = document.getElementById('word-pair-input');
-        const addPairBtn = document.getElementById('add-pair-btn');
-        
-        if (!wordPairInput || !addPairBtn) return;
-        
-        const input = wordPairInput.value.trim();
-        
-        if (input && input.includes(' - ')) {
-            addPairBtn.disabled = false;
-        } else {
-            addPairBtn.disabled = true;
-        }
-    },
-    
-    // Parse input to determine type and extract words
-    parseInput(input) {
-        if (!input || input.trim() === '') {
-            return { type: 'empty', words: null };
-        }
-        
-        // Check for common separators
-        const separators = [' - ', ' -', '- ', ' - ', ' | ', ' |', '| ', ' | '];
-        
-        for (const separator of separators) {
-            if (input.includes(separator)) {
-                const parts = input.split(separator);
-                if (parts.length === 2) {
-                    const word1 = parts[0].trim();
-                    const word2 = parts[1].trim();
-                    
-                    if (word1 && word2) {
-                        return {
-                            type: 'pair',
-                            words: { word1, word2 },
-                            separator: separator
-                        };
-                    }
-                }
-            }
-        }
-        
-        // Single word
-        return {
-            type: 'single',
-            words: { single: input.trim() }
-        };
-    },
-    
-    // Detect language of a word using Google Translate API
-    async detectLanguageSimple(word) {
-        try {
-            // Use Google Translate API to detect language
-            const detectedLang = await TranslateService.detectLanguage(word);
-            return detectedLang;
-        } catch (error) {
-            console.error('Language detection error:', error);
-            return 'unknown';
-        }
-    },
-    
-    // Add word pair directly (without translation)
-    async addWordPair() {
-        const wordInput = document.getElementById('word-input');
-        const input = wordInput.value.trim();
-        
-        if (!input) {
-            this.showNotification('Please enter a word pair', 'error');
-            return;
-        }
-        
-        const inputType = this.parseInput(input);
-        
-        if (inputType.type !== 'pair') {
-            this.showNotification('Please enter a word pair separated by " - "', 'error');
-            return;
-        }
-        
-        const { word1, word2 } = inputType.words;
-        
-        // Detect languages using Google Translate API
-        const lang1 = await this.detectLanguageSimple(word1);
-        const lang2 = await this.detectLanguageSimple(word2);
-        
-        // Determine which is English and which is Spanish
-        let english, spanish;
-        
-        if (lang1 === 'en' || lang2 === 'es') {
-            english = lang1 === 'en' ? word1 : word2;
-            spanish = lang1 === 'es' ? word1 : word2;
-        } else if (lang2 === 'en' || lang1 === 'es') {
-            english = lang2 === 'en' ? word2 : word1;
-            spanish = lang2 === 'es' ? word2 : word1;
-        } else {
-            // If we can't determine, ask user to specify
-            this.showNotification('Cannot determine languages. Please use format: English - Spanish', 'error');
-            return;
-        }
-        
-        // Check if word pair already exists
-        const existingWord = this.words.find(w => 
-            (w.originalText.toLowerCase() === english.toLowerCase() && 
-             w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
-            (w.originalText.toLowerCase() === spanish.toLowerCase() && 
-             w.translatedText.toLowerCase() === english.toLowerCase())
-        );
-        
-        if (existingWord) {
-            this.showNotification('This word pair already exists', 'info');
-            return;
-        }
-        
-        // Add the word pair
-        const newWord = {
-            id: Date.now() + Math.random(),
-            originalText: english,
-            translatedText: spanish,
-            detectedLanguage: 'en',
-            databaseId: this.currentDatabase,
-            score: 0,
-            attempts: 0,
-            lastPracticed: null,
-            createdAt: new Date().toISOString()
-        };
-        
-        this.words.push(newWord);
-        this.saveData();
-        this.updateUI();
-        
-        // Clear input
-        wordInput.value = '';
-        this.detectInputType();
-        
-        this.showNotification('Word pair added successfully!', 'success');
-    },
-    
-    // ===== NEW SEPARATED FUNCTIONS =====
-    
-    // Translate single word
-    async translateSingleWord() {
-        const singleWordInput = document.getElementById('single-word-input');
-        const word = singleWordInput.value.trim();
-        
-        if (!word) {
-            this.showNotification('Please enter a word to translate', 'error');
-            return;
-        }
-        
-        if (!TranslateService.hasApiKey()) {
-            this.showNotification('Google Translate API key required. Click "SETUP API KEY" to configure.', 'error');
-            return;
-        }
-        
-        try {
-            this.showNotification('Translating...', 'info');
-            
-            const translations = await TranslateService.getMultipleTranslations(word);
-            
-            if (translations && translations.length > 0) {
-                this.displayTranslations(translations);
-                this.showNotification('Translation completed!', 'success');
-            } else {
-                this.showNotification('No translation found', 'error');
-            }
-            
-        } catch (error) {
-            console.error('Translation error:', error);
-            this.showNotification('Translation failed: ' + error.message, 'error');
-        }
-    },
-    
-    // Add single word (after translation)
-    async addSingleWord() {
-        const singleWordInput = document.getElementById('single-word-input');
-        const word = singleWordInput.value.trim();
-        
-        if (!word) {
-            this.showNotification('Please enter a word', 'error');
-            return;
-        }
-        
-        if (!this.currentDatabase) {
-            this.showNotification('Please select a database first', 'error');
-            return;
-        }
-        
-        if (!TranslateService.hasApiKey()) {
-            this.showNotification('Please configure API Key first. Click "SETUP API KEY" button.', 'error');
-            return;
-        }
-        
-        try {
-            this.showNotification('Translating and adding word...', 'info');
-            
-            const translations = await TranslateService.getMultipleTranslations(word);
-            
-            if (!translations || translations.length === 0) {
-                this.showNotification('No translation found', 'error');
-                return;
-            }
-            
-            // Add the first translation
-            const translation = translations[0];
-            
-            // Check if word already exists
-            const existingWord = this.words.find(w => 
-                w.originalText.toLowerCase() === word.toLowerCase() && 
-                w.translatedText.toLowerCase() === translation.text.toLowerCase() &&
-                w.databaseId === this.currentDatabase
-            );
-            
-            if (existingWord) {
-                this.showNotification('This word already exists', 'info');
-                return;
-            }
-            
-            // Add the word
-            const newWord = {
-                id: Date.now() + Math.random(),
-                originalText: word,
-                translatedText: translation.text,
-                detectedLanguage: translation.detectedSourceLanguage,
-                databaseId: this.currentDatabase,
-                score: 0,
-                attempts: 0,
-                lastPracticed: null,
-                createdAt: new Date().toISOString()
-            };
-            
-            this.words.push(newWord);
-            this.saveData();
-            this.updateUI();
-            
-            // Clear input
-            singleWordInput.value = '';
-            this.updateSingleWordUI();
-            
-            this.showNotification('Word added successfully!', 'success');
-            
-        } catch (error) {
-            console.error('Add word error:', error);
-            this.showNotification('Failed to add word: ' + error.message, 'error');
-        }
-    },
-    
-    // Add word pair directly
-    async addWordPairDirect() {
-        const wordPairInput = document.getElementById('word-pair-input');
-        const input = wordPairInput.value.trim();
-        
-        if (!input) {
-            this.showNotification('Please enter a word pair', 'error');
-            return;
-        }
-        
-        if (!this.currentDatabase) {
-            this.showNotification('Please select a database first', 'error');
-            return;
-        }
-        
-        if (!input.includes(' - ')) {
-            this.showNotification('Please use format: Spanish word - English word', 'error');
-            return;
-        }
-        
-        // Parse the pair (Spanish - English)
-        const parts = input.split(' - ');
-        if (parts.length !== 2) {
-            this.showNotification('Please use format: Spanish word - English word', 'error');
-            return;
-        }
-        
-        const spanish = parts[0].trim();
-        const english = parts[1].trim();
-        
-        if (!spanish || !english) {
-            this.showNotification('Both words are required', 'error');
-            return;
-        }
-        
-        // Check if word pair already exists
-        const existingWord = this.words.find(w => 
-            (w.originalText.toLowerCase() === english.toLowerCase() && 
-             w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
-            (w.originalText.toLowerCase() === spanish.toLowerCase() && 
-             w.translatedText.toLowerCase() === english.toLowerCase())
-        );
-        
-        if (existingWord) {
-            this.showNotification('This word pair already exists', 'info');
-            return;
-        }
-        
-        // Add the word pair (English as original, Spanish as translation)
-        const newWord = {
-            id: Date.now() + Math.random(),
-            originalText: english,
-            translatedText: spanish,
-            detectedLanguage: 'en',
-            databaseId: this.currentDatabase,
-            score: 0,
-            attempts: 0,
-            lastPracticed: null,
-            createdAt: new Date().toISOString()
-        };
-        
-        this.words.push(newWord);
-        this.saveData();
-        this.updateUI();
-        
-        // Clear input
-        wordPairInput.value = '';
-        this.updateWordPairUI();
-        
-        this.showNotification('Word pair added successfully!', 'success');
-    }
 };
 
 // Initialize app when DOM is loaded

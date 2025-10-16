@@ -73,16 +73,8 @@
                 
                 <div class="info-box">
                     <div class="info-icon">💡</div>
-                    <p><strong>Smart Input:</strong> Write a single word to translate, or a word pair (English - Spanish) to add directly</p>
-                    <p><strong>Examples:</strong> "house" or "casa - house" or "dog - perro"</p>
-                </div>
-                
-                <div class="api-key-section">
-                    <button class="btn-api-key" onclick="App.setupApiKey()">🔑 SETUP API KEY</button>
-                    <div class="api-status" id="api-status">API Key not configured</div>
-                    <div class="api-instructions">
-                        <small>Required for translations. <a href="API_KEY_SETUP.md" target="_blank">Click here for setup instructions</a></small>
-                    </div>
+                    <p><strong>Manual Input:</strong> Enter the Spanish word and its English translation manually</p>
+                    <p><strong>Example:</strong> Spanish: "perro" → English: "dog"</p>
                 </div>
                 
                 <div class="section">
@@ -96,47 +88,45 @@
                     </div>
                 </div>
                 
-                <!-- Single Word Translation -->
-                <div class="section">
-                    <label>Single Word Translation:</label>
-                    <input type="text" id="single-word-input" placeholder="Write a word in English or Spanish...">
-                    <div class="language-detection" id="single-language-detection">DETECTING LANGUAGE...</div>
-                    
-                    <!-- Translation Results -->
-                    <div class="translation-results" id="translation-results" style="display: none;">
-                        <div class="translation-header">Translation:</div>
-                        <div class="translation-list" id="translation-list"></div>
+                <!-- Manual Word Input -->
+                <div class="section dual-input">
+                    <div class="input-group">
+                        <label>Spanish Word:</label>
+                        <input type="text" id="spanish-word-input" placeholder="Enter Spanish word (e.g., perro)">
                     </div>
                     
-                    <div class="action-buttons">
-                        <button class="btn-translate" id="translate-btn">TRANSLATE</button>
-                        <button class="btn-add" id="add-single-btn">ADD WORD</button>
-                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
+                    <div class="input-group">
+                        <label>English Translation:</label>
+                        <input type="text" id="english-word-input" placeholder="Enter English translation (e.g., dog)">
                     </div>
                 </div>
                 
-                <!-- Word Pair Input -->
-                <div class="section">
-                    <label>Word Pair (Spanish - English):</label>
-                    <input type="text" id="word-pair-input" placeholder="perro - dog">
-                    <div class="pair-info">Format: Spanish word - English word</div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn-add" id="add-pair-btn">ADD WORD PAIR</button>
-                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
-                    </div>
+                <div class="action-buttons">
+                    <button class="btn-add" id="add-manual-word-btn">ADD WORD</button>
+                    <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
                 </div>
                 
                 <div class="import-section">
                     <div class="import-info">
                         <div class="import-icon">📋</div>
-                        <p>Paste a list of words (one per line) and Google Translate will translate them automatically</p>
+                        <p>Import word pairs manually or load from file (one pair per line, format: Spanish - English)<br><small>✅ Supported: .txt, .csv, .md, .rtf | ❌ Not supported: .pdf, .doc, .docx</small></p>
                     </div>
-                    <label>Word List:</label>
-                    <textarea id="word-list" placeholder="Write or paste a list of words, one per line...&#10;Example: hello"></textarea>
+                    
+                    <!-- File Upload Section -->
+                    <div class="file-upload-section">
+                        <label>Load from File:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="file-input" accept=".txt,.csv,.md,.rtf" style="display: none;">
+                            <button class="btn-file" id="file-select-btn">📁 SELECT FILE</button>
+                            <span class="file-name" id="file-name">No file selected</span>
+                        </div>
+                    </div>
+                    
+                    <label>Word Pairs List:</label>
+                    <textarea id="word-list" placeholder="Enter word pairs, one per line...&#10;Example: perro - dog&#10;gato - cat&#10;casa - house"></textarea>
                     <div class="action-buttons">
-                        <button class="btn-translate">TRANSLATE LIST</button>
-                        <button class="btn-add">ADD LIST</button>
+                        <button class="btn-add" id="add-list-btn">ADD WORD LIST</button>
+                        <button class="btn-clear" id="clear-list-btn">🗑️ CLEAR LIST</button>
                         <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
                     </div>
                 </div>
@@ -169,6 +159,10 @@
                 <div class="search-section">
                     <input type="text" id="search-input" placeholder="Search words in English or Spanish...">
                     <div class="word-count">All words (0)</div>
+                </div>
+                
+                <div class="section">
+                    <button class="btn-delete-all" id="delete-all-btn">🗑️ DELETE ALL WORDS</button>
                 </div>
                 
                 <div class="words-container">

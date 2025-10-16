@@ -77,7 +77,7 @@ body {
 }
 
 /* Buttons */
-.back-btn, .play-btn, .btn-add, .btn-view, .btn-create, .btn-delete, .btn-debug, .btn-translate, .start-game-btn {
+.back-btn, .play-btn, .btn-add, .btn-view, .btn-clear, .btn-create, .btn-delete, .btn-debug, .btn-translate, .start-game-btn {
     padding: 12px 20px;
     border: none;
     border-radius: 10px;
@@ -104,6 +104,11 @@ body {
 
 .btn-view {
     background: #6f42c1;
+    color: white;
+}
+
+.btn-clear {
+    background: #dc3545;
     color: white;
 }
 
@@ -137,7 +142,7 @@ body {
 }
 
 /* Hover Effects */
-.back-btn:hover, .play-btn:hover, .btn-add:hover, .btn-view:hover, .btn-create:hover, .btn-debug:hover, .btn-translate:hover, .start-game-btn:hover {
+.back-btn:hover, .play-btn:hover, .btn-add:hover, .btn-view:hover, .btn-clear:hover, .btn-create:hover, .btn-delete:hover, .btn-debug:hover, .btn-translate:hover, .start-game-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
@@ -443,5 +448,223 @@ input[type="text"]:focus, textarea:focus, select:focus {
     .search-section {
         flex-direction: column;
         align-items: stretch;
+    }
+}
+
+/* Dual Input Layout */
+.dual-input {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    margin-bottom: 8px;
+}
+
+.input-group input {
+    width: 100%;
+}
+
+/* Responsive for dual input */
+@media (max-width: 768px) {
+    .dual-input {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* File Upload Section */
+.file-upload-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+}
+
+.file-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.btn-file {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-file:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.file-name {
+    color: #6c757d;
+    font-style: italic;
+    flex: 1;
+}
+
+.file-name.has-file {
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Responsive for file upload */
+@media (max-width: 768px) {
+    .file-input-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .file-name {
+        text-align: center;
+    }
+}
+
+/* Delete All button styles */
+.btn-delete-all {
+    background: linear-gradient(135deg, #ff4757, #ff3742);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.btn-delete-all:hover {
+    background: linear-gradient(135deg, #ff3742, #ff2f3a);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+}
+
+/* Table styles */
+.words-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.words-table thead {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.words-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.words-table th:last-child {
+    border-right: none;
+}
+
+.words-table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.words-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.words-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.words-table td {
+    padding: 15px 20px;
+    font-size: 16px;
+    color: #333;
+    border-right: 1px solid #e9ecef;
+}
+
+.words-table td:last-child {
+    border-right: none;
+}
+
+.spanish-word {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.english-word {
+    color: #34495e;
+}
+
+.points-cell {
+    text-align: center;
+    width: 100px;
+}
+
+.points-value {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 16px;
+}
+
+
+.action-cell {
+    text-align: center;
+    width: 80px;
+}
+
+.delete-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #ff3742;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .words-table {
+        font-size: 14px;
+    }
+    
+    .words-table th,
+    .words-table td {
+        padding: 10px 15px;
+    }
+    
+    .delete-btn {
+        padding: 6px 12px;
+        font-size: 11px;
     }
 }
