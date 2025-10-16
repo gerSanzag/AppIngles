@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Learning App</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/modules.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Landing Page -->
+        <div id="landing" class="module active">
+            <div class="app-header">
+                <h1>English Learning App</h1>
+                <p>Interactive game to learn English</p>
+            </div>
+            
+            <div class="main-card">
+                <div class="card-header">
+                    <h2>Choose an Option</h2>
+                </div>
+                
+                <div class="options-grid">
+                    <button class="option-btn play-game" onclick="navigateToModule('game')">
+                        <div class="btn-icon">🎮</div>
+                        <div class="btn-content">
+                            <h3>PLAY GAME</h3>
+                            <p>START LEARNING WITH THE INTERACTIVE GAME</p>
+                        </div>
+                    </button>
+                    
+                    <button class="option-btn add-words" onclick="navigateToModule('add-words')">
+                        <div class="btn-icon">➕</div>
+                        <div class="btn-content">
+                            <h3>ADD WORDS</h3>
+                            <p>ADD NEW WORDS WITH AUTOMATIC TRANSLATION</p>
+                        </div>
+                    </button>
+                    
+                    <button class="option-btn view-words" onclick="navigateToModule('view-words')">
+                        <div class="btn-icon">📚</div>
+                        <div class="btn-content">
+                            <h3>VIEW WORDS</h3>
+                            <p>SEE ALL YOUR SAVED WORDS AND SCORES</p>
+                        </div>
+                    </button>
+                    
+                    <button class="option-btn learned-words" onclick="navigateToModule('learned-words')">
+                        <div class="btn-icon">🏆</div>
+                        <div class="btn-content">
+                            <h3>LEARNED WORDS</h3>
+                            <p>VIEW YOUR MASTERED WORDS</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Words Module -->
+        <div id="add-words" class="module">
+            <div class="app-header">
+                <h1>Add Words/Phrases</h1>
+                <p>Add new words with automatic translation</p>
+            </div>
+            
+            <div class="main-card">
+                <div class="card-header">
+                    <button class="back-btn" onclick="navigateToModule('landing')">← BACK TO MENU</button>
+                    <button class="play-btn" onclick="navigateToModule('game')">🎮 PLAY GAME</button>
+                </div>
+                
+                <div class="info-box">
+                    <div class="info-icon">💡</div>
+                    <p><strong>Smart Input:</strong> Write a single word to translate, or a word pair (English - Spanish) to add directly</p>
+                    <p><strong>Examples:</strong> "house" or "casa - house" or "dog - perro"</p>
+                </div>
+                
+                <div class="api-key-section">
+                    <button class="btn-api-key" onclick="App.setupApiKey()">🔑 SETUP API KEY</button>
+                    <div class="api-status" id="api-status">API Key not configured</div>
+                    <div class="api-instructions">
+                        <small>Required for translations. <a href="API_KEY_SETUP.md" target="_blank">Click here for setup instructions</a></small>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <label>Select Database:</label>
+                    <div class="database-selector">
+                        <select id="database-select">
+                            <option value="">Select a database...</option>
+                        </select>
+                        <button class="btn-create">+ CREATE NEW DATABASE</button>
+                        <button class="btn-delete" disabled>🗑️ DELETE DATABASE</button>
+                    </div>
+                </div>
+                
+                <!-- Single Word Translation -->
+                <div class="section">
+                    <label>Single Word Translation:</label>
+                    <input type="text" id="single-word-input" placeholder="Write a word in English or Spanish...">
+                    <div class="language-detection" id="single-language-detection">DETECTING LANGUAGE...</div>
+                    
+                    <!-- Translation Results -->
+                    <div class="translation-results" id="translation-results" style="display: none;">
+                        <div class="translation-header">Translation:</div>
+                        <div class="translation-list" id="translation-list"></div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-translate" id="translate-btn">TRANSLATE</button>
+                        <button class="btn-add" id="add-single-btn">ADD WORD</button>
+                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
+                    </div>
+                </div>
+                
+                <!-- Word Pair Input -->
+                <div class="section">
+                    <label>Word Pair (Spanish - English):</label>
+                    <input type="text" id="word-pair-input" placeholder="perro - dog">
+                    <div class="pair-info">Format: Spanish word - English word</div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-add" id="add-pair-btn">ADD WORD PAIR</button>
+                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
+                    </div>
+                </div>
+                
+                <div class="import-section">
+                    <div class="import-info">
+                        <div class="import-icon">📋</div>
+                        <p>Paste a list of words (one per line) and Google Translate will translate them automatically</p>
+                    </div>
+                    <label>Word List:</label>
+                    <textarea id="word-list" placeholder="Write or paste a list of words, one per line...&#10;Example: hello"></textarea>
+                    <div class="action-buttons">
+                        <button class="btn-translate">TRANSLATE LIST</button>
+                        <button class="btn-add">ADD LIST</button>
+                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Words Module -->
+        <div id="view-words" class="module">
+            <div class="app-header">
+                <h1>Saved Words</h1>
+                <p>See all your saved words and scores</p>
+            </div>
+            
+            <div class="main-card">
+                <div class="card-header">
+                    <button class="back-btn" onclick="navigateToModule('landing')">← BACK TO MENU</button>
+                    <div class="header-actions">
+                        <button class="btn-add" onclick="navigateToModule('add-words')">➕ ADD WORDS</button>
+                        <button class="play-btn" onclick="navigateToModule('game')">🎮 PLAY GAME</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <label>Select Database:</label>
+                    <select id="view-database-select">
+                        <option value="">Select a database...</option>
+                    </select>
+                </div>
+                
+                <div class="search-section">
+                    <input type="text" id="search-input" placeholder="Search words in English or Spanish...">
+                    <div class="word-count">All words (0)</div>
+                </div>
+                
+                <div class="words-container">
+                    <div class="no-words-message">No words in this database</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Game Module -->
+        <div id="game" class="module">
+            <div class="app-header">
+                <h1>Learning Game</h1>
+                <p>Start learning with the interactive game</p>
+            </div>
+            
+            <div class="main-card">
+                <div class="card-header">
+                    <button class="back-btn" onclick="navigateToModule('landing')">← BACK TO MENU</button>
+                    <div class="header-actions">
+                        <button class="btn-view" onclick="navigateToModule('view-words')">📚 VIEW WORDS</button>
+                        <button class="btn-add" onclick="navigateToModule('add-words')">➕ ADD WORDS</button>
+                    </div>
+                </div>
+                
+                <div class="game-instructions">
+                    <div class="instruction-icon">💡</div>
+                    <p>Write the English translation of the Spanish word. Each correct answer adds points, each error resets them!</p>
+                </div>
+                
+                <div class="section">
+                    <label>Choose word database:</label>
+                    <select id="game-database-select">
+                        <option value="">Select a database...</option>
+                    </select>
+                </div>
+                
+                <div class="game-area">
+                    <div class="game-message">Add some words to start playing</div>
+                    <button class="start-game-btn">START GAME</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learned Words Module -->
+        <div id="learned-words" class="module">
+            <div class="app-header">
+                <h1>🏆 Learned Words</h1>
+                <p>View your mastered words</p>
+            </div>
+            
+            <div class="main-card">
+                <div class="card-header">
+                    <button class="back-btn" onclick="navigateToModule('landing')">← BACK TO MENU</button>
+                    <div class="header-actions">
+                        <button class="play-btn" onclick="navigateToModule('game')">🎮 PLAY GAME</button>
+                        <button class="btn-view" onclick="navigateToModule('view-words')">📖 VIEW WORDS</button>
+                    </div>
+                </div>
+                
+                <div class="learned-info">
+                    <div class="info-icon">⭐</div>
+                    <p>These are the words you've mastered! You've learned them with 15+ points each.</p>
+                </div>
+                
+                <div class="learned-content">
+                    <div class="no-learned-message">No words learned yet. Keep playing to master words!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/translate.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/modules.js"></script>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* App Header */
+.app-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.app-header h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.app-header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* Main Card */
+.main-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 30px;
+    max-width: 800px;
+    width: 100%;
+    min-height: 500px;
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 2px solid #f0f0f0;
+    gap: 20px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+/* Module System */
+.module {
+    display: none;
+}
+
+.module.active {
+    display: block !important;
+}
+
+/* Buttons */
+.back-btn, .play-btn, .btn-add, .btn-view, .btn-create, .btn-delete, .btn-debug, .btn-translate, .start-game-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.play-btn {
+    background: #28a745;
+    color: white;
+}
+
+.btn-add {
+    background: #007bff;
+    color: white;
+}
+
+.btn-view {
+    background: #6f42c1;
+    color: white;
+}
+
+.btn-create {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-delete {
+    background: #6c757d;
+    color: white;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-debug {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-translate {
+    background: #6c757d;
+    color: white;
+}
+
+.start-game-btn {
+    background: #28a745;
+    color: white;
+    font-size: 18px;
+    padding: 15px 30px;
+}
+
+/* Hover Effects */
+.back-btn:hover, .play-btn:hover, .btn-add:hover, .btn-view:hover, .btn-create:hover, .btn-debug:hover, .btn-translate:hover, .start-game-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Sections */
+.section {
+    margin-bottom: 25px;
+}
+
+.section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Info Boxes */
+.info-box, .import-info, .learned-info {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-icon, .import-icon {
+    font-size: 1.2rem;
+}
+
+/* Game Instructions */
+.game-instructions {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.instruction-icon {
+    font-size: 1.2rem;
+}
+
+/* Database Selector */
+.database-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.database-selector select {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Input Fields */
+input[type="text"], textarea, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+#word-list {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Language Detection */
+.language-detection {
+    color: #6c757d;
+    font-size: 12px;
+    margin: 5px 0;
+}
+
+/* Translation Results */
+.translation-results {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.translation-header {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.translation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.translation-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.translation-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+}
+
+.translation-text {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.translation-language {
+    font-size: 12px;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+}
+
+.translation-item.selected {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.translation-item.selected .translation-text {
+    color: #1976d2;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+/* API Key Section */
+.api-key-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.btn-api-key {
+    background: #ffc107;
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-api-key:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+}
+
+.api-status {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.api-instructions {
+    margin-left: auto;
+}
+
+.api-instructions a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.api-instructions a:hover {
+    text-decoration: underline;
+}
+
+/* Import Section */
+.import-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+/* Search Section */
+.search-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-section input {
+    flex: 1;
+}
+
+.word-count {
+    color: #6c757d;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* Words Container */
+.words-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-words-message, .no-learned-message {
+    color: #6c757d;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* Game Area */
+.game-area {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.game-message {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+/* Learned Content */
+.learned-content {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-header h1 {
+        font-size: 2rem;
+    }
+    
+    .main-card {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+        padding: 25px 0;
+    }
+    
+    .card-header h2 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .header-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .database-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .search-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

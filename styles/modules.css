@@ -1,0 +1,324 @@
+/* Module-specific styles */
+
+/* Add Words Module */
+#add-words .section {
+    margin-bottom: 25px;
+}
+
+#add-words .database-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#add-words .database-selector select {
+    flex: 1;
+    min-width: 200px;
+}
+
+#add-words .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+#add-words .import-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+/* View Words Module */
+#view-words .search-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#view-words .search-section input {
+    flex: 1;
+}
+
+#view-words .word-count {
+    color: #6c757d;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#view-words .words-container {
+    min-height: 300px;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+#view-words .words-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Game Module */
+#game .game-area {
+    text-align: center;
+    padding: 40px 0;
+}
+
+#game .game-message {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+#game .game-question {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#game .question-word {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+#game .question-instruction {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+#game .game-answer {
+    margin-bottom: 30px;
+}
+
+#game .answer-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2rem;
+    border: 3px solid #ddd;
+    border-radius: 10px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+#game .answer-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+#game .game-feedback {
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+#game .feedback-correct {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #c3e6cb;
+}
+
+#game .feedback-incorrect {
+    background: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+}
+
+#game .game-stats {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+#game .stat-item {
+    text-align: center;
+}
+
+#game .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+#game .stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+#game .game-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Learned Words Module */
+#learned-words .learned-content {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#learned-words .learned-words-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+#learned-words .learned-word-card {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border: 2px solid #ffc107;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+}
+
+#learned-words .learned-word-content {
+    flex: 1;
+}
+
+#learned-words .learned-word-english {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+#learned-words .learned-word-spanish {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+#learned-words .learned-word-score {
+    background: #28a745;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Module Transitions - Only for active modules */
+.module.active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+/* Module-specific animations */
+#landing.active {
+    animation: slideInFromTop 0.5s ease;
+}
+
+#add-words.active {
+    animation: slideInFromRight 0.5s ease;
+}
+
+#view-words.active {
+    animation: slideInFromLeft 0.5s ease;
+}
+
+#game.active {
+    animation: slideInFromBottom 0.5s ease;
+}
+
+#learned-words.active {
+    animation: slideInFromTop 0.5s ease;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments for modules */
+@media (max-width: 768px) {
+    #game .game-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    #game .game-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #learned-words .learned-word-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    #view-words .search-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #add-words .database-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #add-words .action-buttons {
+        flex-direction: column;
+    }
+}
