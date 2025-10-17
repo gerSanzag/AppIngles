@@ -81,9 +81,13 @@ const GameModule = {
             </div>
         `;
         
-        // Focus on answer input
+        // Focus on answer input and ensure it's enabled
         const answerInput = document.getElementById('answer-input');
         if (answerInput) {
+            answerInput.disabled = false;
+            answerInput.placeholder = 'Type your answer here...';
+            answerInput.style.backgroundColor = '';
+            answerInput.style.cursor = '';
             answerInput.focus();
             answerInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -142,12 +146,18 @@ const GameModule = {
         const feedback = document.getElementById('game-feedback');
         if (feedback) {
             feedback.style.display = 'none';
+            feedback.textContent = '';
+            feedback.className = 'game-feedback';
         }
         
-        // Clear answer input
+        // Clear answer input and re-enable it
         const answerInput = document.getElementById('answer-input');
         if (answerInput) {
             answerInput.value = '';
+            answerInput.disabled = false;
+            answerInput.placeholder = 'Type your answer here...';
+            answerInput.style.backgroundColor = '';
+            answerInput.style.cursor = '';
             answerInput.focus();
         }
         
@@ -180,6 +190,9 @@ const GameModule = {
             // Correct answer
             this.currentQuestion.counter = (this.currentQuestion.counter || 0) + 1;
             
+            // Show success feedback
+            this.showFeedback('✅ ¡Respuesta correcta! +1 punto', 'correct');
+            
             // Check if word should be marked as learned
             if (this.currentQuestion.counter >= 15) {
                 // Move to learned words
@@ -194,7 +207,11 @@ const GameModule = {
             
         } else {
             // Incorrect answer - subtract 5 points from current score
-            this.currentQuestion.counter = Math.max(0, (this.currentQuestion.counter || 0) - 5);
+            const newScore = Math.max(0, (this.currentQuestion.counter || 0) - 5);
+            this.currentQuestion.counter = newScore;
+            
+            // Show error feedback with new score
+            this.showFeedback(`❌ Respuesta incorrecta. Tu puntaje bajó a ${newScore}`, 'incorrect');
         }
         
         // Save data immediately
@@ -207,6 +224,16 @@ const GameModule = {
         }
     },
     
+    // Show feedback message
+    showFeedback(message, type) {
+        const feedback = document.getElementById('game-feedback');
+        if (feedback) {
+            feedback.textContent = message;
+            feedback.className = `game-feedback feedback-${type}`;
+            feedback.style.display = 'block';
+        }
+    },
+    
     // Show answer without affecting counter
     showAnswer() {
         if (!this.currentQuestion) return;
@@ -215,6 +242,15 @@ const GameModule = {
         const showAnswerInput = document.getElementById('show-answer-input');
         if (showAnswerInput) {
             showAnswerInput.value = this.currentQuestion.originalText;
+        }
+        
+        // Block the main answer input to prevent cheating
+        const answerInput = document.getElementById('answer-input');
+        if (answerInput) {
+            answerInput.disabled = true;
+            answerInput.placeholder = 'Campo bloqueado - Respuesta mostrada';
+            answerInput.style.backgroundColor = '#f5f5f5';
+            answerInput.style.cursor = 'not-allowed';
         }
         
         // Show next word button
