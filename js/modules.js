@@ -4,11 +4,30 @@ const GameModule = {
     gameActive: false,
     currentScore: 0,
     currentStreak: 0,
+    availableWords: [],
     
     // Start the game
     startGame() {
-        if (App.words.length === 0) {
-            App.showNotification('Please add some words first!', 'error');
+        if (!App.currentDatabase) {
+            App.showNotification('Please select a database first!', 'error');
+            return;
+        }
+        
+        // Check if trying to play with learned words database
+        if (App.currentDatabase === 'learned-words') {
+            App.showNotification('Cannot play with learned words! Please select a regular database.', 'error');
+            Navigation.navigateToModule('learned-words');
+            return;
+        }
+        
+        // Get words from current database (excluding learned words)
+        this.availableWords = App.words.filter(word => 
+            word.databaseId === App.currentDatabase && 
+            word.counter < 15
+        );
+        
+        if (this.availableWords.length === 0) {
+            App.showNotification('No words available in this database!', 'error');
             return;
         }
         
@@ -20,30 +39,26 @@ const GameModule = {
         this.nextQuestion();
     },
     
+    // Restart game with current database
+    restartGame() {
+        if (this.gameActive) {
+            this.endGame();
+        }
+        setTimeout(() => {
+            this.startGame();
+        }, 100);
+    },
+    
     // Show game interface
     showGameInterface() {
         const gameArea = document.querySelector('.game-area');
         if (!gameArea) return;
         
         gameArea.innerHTML = `
-            <div class="game-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="current-score">0</div>
-                    <div class="stat-label">Score</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="current-streak">0</div>
-                    <div class="stat-label">Streak</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="words-remaining">${App.words.length}</div>
-                    <div class="stat-label">Remaining</div>
-                </div>
-            </div>
-            
             <div class="game-question" id="game-question">
                 <div class="question-word" id="question-word">Loading...</div>
-                <div class="question-instruction">Write the English translation</div>
+                <div class="question-instruction">How do you say this in English?</div>
+                <div class="word-progress" id="word-progress" style="display: none;"></div>
             </div>
             
             <div class="game-answer">
@@ -54,7 +69,14 @@ const GameModule = {
             
             <div class="game-controls">
                 <button class="btn-add" onclick="GameModule.checkAnswer()">CHECK ANSWER</button>
-                <button class="btn-view" onclick="GameModule.skipQuestion()">SKIP</button>
+                <div class="show-answer-section">
+                    <button class="btn-view" onclick="GameModule.showAnswer()">MOSTRAR RESPUESTA</button>
+                    <div class="answer-fields">
+                        <input type="text" id="show-answer-input" placeholder="Respuesta correcta desplegada" readonly>
+                        <input type="text" id="practice-answer-input" placeholder="Campo vacío para que el usuario escriba" autocomplete="off">
+                    </div>
+                </div>
+                <button class="btn-view" onclick="GameModule.nextQuestion()" id="next-word-btn" style="display: none;">NEXT WORD</button>
                 <button class="back-btn" onclick="GameModule.endGame()">END GAME</button>
             </div>
         `;
@@ -73,19 +95,50 @@ const GameModule = {
     
     // Get next question
     nextQuestion() {
-        if (App.words.length === 0) {
+        // Check if trying to play with learned words database
+        if (App.currentDatabase === 'learned-words') {
             this.endGame();
             return;
         }
         
-        // Select random word
-        const randomIndex = Math.floor(Math.random() * App.words.length);
-        this.currentQuestion = App.words[randomIndex];
+        // Update available words (filter by current database and remove learned words)
+        this.availableWords = App.words.filter(word => 
+            word.databaseId === App.currentDatabase && 
+            word.counter < 15 // Exclude words that are already learned
+        );
+        
+        console.log('Current database:', App.currentDatabase);
+        console.log('Available words:', this.availableWords.length);
+        console.log('All words:', App.words.length);
+        
+        if (this.availableWords.length === 0) {
+            this.endGame();
+            return;
+        }
+        
+        // Select word prioritizing those with lower scores
+        this.availableWords.sort((a, b) => (a.counter || 0) - (b.counter || 0));
+        
+        // Get words with lowest scores
+        const lowestScore = this.availableWords[0].counter || 0;
+        const lowScoreWords = this.availableWords.filter(word => (word.counter || 0) === lowestScore);
+        
+        // Select random word from low score words
+        const randomIndex = Math.floor(Math.random() * lowScoreWords.length);
+        this.currentQuestion = lowScoreWords[randomIndex];
         
         // Update question display
         const questionWord = document.getElementById('question-word');
         if (questionWord) {
-            questionWord.textContent = this.currentQuestion.translatedText;
+            questionWord.textContent = `"${this.currentQuestion.translatedText}"`;
+        }
+        
+        // Show word progress
+        const wordProgress = document.getElementById('word-progress');
+        if (wordProgress) {
+            const currentScore = this.currentQuestion.counter || 0;
+            wordProgress.textContent = `Progress: ${currentScore}/15 points`;
+            wordProgress.style.display = 'block';
         }
         
         // Clear previous feedback
@@ -100,6 +153,22 @@ const GameModule = {
             answerInput.value = '';
             answerInput.focus();
         }
+        
+        // Clear show answer inputs
+        const showAnswerInput = document.getElementById('show-answer-input');
+        const practiceAnswerInput = document.getElementById('practice-answer-input');
+        if (showAnswerInput) {
+            showAnswerInput.value = '';
+        }
+        if (practiceAnswerInput) {
+            practiceAnswerInput.value = '';
+        }
+        
+        // Hide next word button
+        const nextWordBtn = document.getElementById('next-word-btn');
+        if (nextWordBtn) {
+            nextWordBtn.style.display = 'none';
+        }
     },
     
     // Check user's answer
@@ -110,52 +179,52 @@ const GameModule = {
         const userAnswer = answerInput.value.trim().toLowerCase();
         const correctAnswer = this.currentQuestion.originalText.toLowerCase();
         
-        const feedback = document.getElementById('game-feedback');
-        if (!feedback) return;
-        
         if (userAnswer === correctAnswer) {
             // Correct answer
-            this.currentScore += 10;
-            this.currentStreak += 1;
-            
-            feedback.className = 'game-feedback feedback-correct';
-            feedback.textContent = `Correct! +10 points (Streak: ${this.currentStreak})`;
-            feedback.style.display = 'block';
-            
-            // Update word score
-            this.currentQuestion.score += 10;
-            this.currentQuestion.attempts += 1;
-            this.currentQuestion.lastPracticed = new Date().toISOString();
+            this.currentQuestion.counter = (this.currentQuestion.counter || 0) + 1;
             
             // Check if word should be marked as learned
-            if (this.currentQuestion.score >= 15) {
-                App.learnedWords.push(this.currentQuestion);
+            if (this.currentQuestion.counter >= 15) {
+                // Move to learned words
+                const learnedWord = {
+                    ...this.currentQuestion,
+                    learnedAt: new Date().toISOString()
+                };
+                App.learnedWords.push(learnedWord);
                 App.words = App.words.filter(w => w.id !== this.currentQuestion.id);
                 App.showNotification('Word mastered! Moved to learned words.', 'success');
             }
             
         } else {
-            // Incorrect answer
-            this.currentScore = Math.max(0, this.currentScore - 5);
-            this.currentStreak = 0;
-            
-            feedback.className = 'game-feedback feedback-incorrect';
-            feedback.textContent = `Incorrect! The answer was: "${this.currentQuestion.originalText}" (-5 points)`;
-            feedback.style.display = 'block';
-            
-            this.currentQuestion.attempts += 1;
+            // Incorrect answer - subtract 5 points from current score
+            this.currentQuestion.counter = Math.max(0, (this.currentQuestion.counter || 0) - 5);
         }
         
-        // Update stats display
-        this.updateStats();
-        
-        // Save data
+        // Save data immediately
         App.saveData();
         
-        // Move to next question after delay
-        setTimeout(() => {
-            this.nextQuestion();
-        }, 2000);
+        // Show next word button
+        const nextWordBtn = document.getElementById('next-word-btn');
+        if (nextWordBtn) {
+            nextWordBtn.style.display = 'inline-block';
+        }
+    },
+    
+    // Show answer without affecting counter
+    showAnswer() {
+        if (!this.currentQuestion) return;
+        
+        // Show answer in the non-functional text field
+        const showAnswerInput = document.getElementById('show-answer-input');
+        if (showAnswerInput) {
+            showAnswerInput.value = this.currentQuestion.originalText;
+        }
+        
+        // Show next word button
+        const nextWordBtn = document.getElementById('next-word-btn');
+        if (nextWordBtn) {
+            nextWordBtn.style.display = 'inline-block';
+        }
     },
     
     // Skip current question
@@ -177,69 +246,47 @@ const GameModule = {
         }, 1500);
     },
     
-    // Update game statistics
-    updateStats() {
-        const scoreElement = document.getElementById('current-score');
-        const streakElement = document.getElementById('current-streak');
-        const remainingElement = document.getElementById('words-remaining');
-        
-        if (scoreElement) {
-            scoreElement.textContent = this.currentScore;
-        }
-        
-        if (streakElement) {
-            streakElement.textContent = this.currentStreak;
-        }
-        
-        if (remainingElement) {
-            remainingElement.textContent = App.words.length;
-        }
-    },
     
     // End the game
     endGame() {
         this.gameActive = false;
         
-        const gameArea = document.querySelector('.game-area');
-        if (!gameArea) return;
-        
-        const finalScore = this.currentScore;
-        const wordsLearned = App.learnedWords.length;
-        
-        gameArea.innerHTML = `
-            <div class="game-question">
-                <div class="question-word">Game Over!</div>
-                <div class="question-instruction">Final Score: ${finalScore} points</div>
-            </div>
-            
-            <div class="game-stats">
-                <div class="stat-item">
-                    <div class="stat-value">${finalScore}</div>
-                    <div class="stat-label">Final Score</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${wordsLearned}</div>
-                    <div class="stat-label">Words Learned</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${App.words.length}</div>
-                    <div class="stat-label">Words Remaining</div>
-                </div>
-            </div>
-            
-            <div class="game-controls">
-                <button class="start-game-btn" onclick="GameModule.startGame()">PLAY AGAIN</button>
-                <button class="btn-view" onclick="Navigation.navigateToModule('view-words')">VIEW WORDS</button>
-                <button class="back-btn" onclick="Navigation.navigateToModule('landing')">BACK TO MENU</button>
-            </div>
-        `;
-        
-        // Update app stats
-        App.gameStats.score = Math.max(App.gameStats.score, finalScore);
-        App.gameStats.correct += this.currentScore / 10;
+        // Save data first
         App.saveData();
         
-        App.showNotification(`Game completed! Final score: ${finalScore}`, 'success');
+        // Check if all words in database are learned
+        const remainingWords = App.words.filter(word => 
+            word.databaseId === App.currentDatabase && 
+            word.counter < 15
+        ).length;
+        
+        const isDatabaseComplete = remainingWords === 0;
+        
+        if (isDatabaseComplete) {
+            // If database is complete, go directly to learned words module
+            App.showNotification('🎉 Congratulations! You have mastered all words in this database!', 'success');
+            Navigation.navigateToModule('learned-words');
+        } else {
+            // If not complete, show game over message
+            const gameArea = document.querySelector('.game-area');
+            if (!gameArea) return;
+            
+            let gameOverHTML = `
+                <div class="game-question">
+                    <div class="question-word">Game Over!</div>
+                    <div class="question-instruction">Game session completed!</div>
+                </div>
+                
+                <div class="game-controls">
+                    <button class="start-game-btn" onclick="GameModule.startGame()">PLAY AGAIN</button>
+                    <button class="btn-view" onclick="Navigation.navigateToModule('view-words')">VIEW WORDS</button>
+                    <button class="back-btn" onclick="Navigation.navigateToModule('landing')">BACK TO MENU</button>
+                </div>
+            `;
+            
+            gameArea.innerHTML = gameOverHTML;
+            App.showNotification('Game session completed!', 'success');
+        }
     }
 };
 

@@ -36,6 +36,12 @@ const App = {
                 this.currentDatabase = data.currentDatabase || '';
                 this.gameStats = { ...this.gameStats, ...(data.gameStats || {}) };
                 
+                // Ensure learned words database exists
+                this.ensureLearnedWordsDatabase();
+                
+                // Clean up any existing duplicates
+                this.removeDuplicateLearnedWords();
+                
                 console.log('✅ Data loaded from server successfully');
             } else {
                 console.warn('⚠️ Could not load data from server, using defaults');
@@ -60,6 +66,46 @@ const App = {
             incorrect: 0,
             streak: 0
         };
+        
+        // Create learned words database if it doesn't exist
+        this.ensureLearnedWordsDatabase();
+        
+        // Clean up any existing duplicates
+        this.removeDuplicateLearnedWords();
+    },
+    
+    // Ensure learned words database exists
+    ensureLearnedWordsDatabase() {
+        const learnedWordsDB = this.databases.find(db => db.id === 'learned-words');
+        if (!learnedWordsDB) {
+            const learnedWordsDatabase = {
+                id: 'learned-words',
+                name: 'Learned Words',
+                createdAt: new Date().toISOString(),
+                isSystem: true // Mark as system database
+            };
+            this.databases.push(learnedWordsDatabase);
+        }
+    },
+    
+    // Remove duplicate learned words
+    removeDuplicateLearnedWords() {
+        const uniqueWords = [];
+        const seenWords = new Set();
+        
+        for (const word of this.learnedWords) {
+            const key = `${word.originalText.toLowerCase()}-${word.translatedText.toLowerCase()}`;
+            if (!seenWords.has(key)) {
+                seenWords.add(key);
+                uniqueWords.push(word);
+            }
+        }
+        
+        if (uniqueWords.length !== this.learnedWords.length) {
+            const removedCount = this.learnedWords.length - uniqueWords.length;
+            this.learnedWords = uniqueWords;
+            console.log(`🧹 Removed ${removedCount} duplicate learned words`);
+        }
     },
     
     // Save data to server
@@ -230,16 +276,30 @@ const App = {
             return;
         }
         
-        // Check if word pair already exists
+        // Check if word pair already exists in current database
         const existingWord = this.words.find(w => 
+            w.databaseId === this.currentDatabase &&
+            ((w.originalText.toLowerCase() === english.toLowerCase() && 
+              w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
+             (w.originalText.toLowerCase() === spanish.toLowerCase() && 
+              w.translatedText.toLowerCase() === english.toLowerCase()))
+        );
+        
+        if (existingWord) {
+            this.showNotification('This word pair already exists in this database', 'info');
+            return;
+        }
+        
+        // Check if word pair already exists in learned words
+        const existingLearnedWord = this.learnedWords.find(w => 
             (w.originalText.toLowerCase() === english.toLowerCase() && 
              w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
             (w.originalText.toLowerCase() === spanish.toLowerCase() && 
              w.translatedText.toLowerCase() === english.toLowerCase())
         );
         
-        if (existingWord) {
-            this.showNotification('This word pair already exists', 'info');
+        if (existingLearnedWord) {
+            this.showNotification('This word pair already exists in learned words', 'info');
             return;
         }
         
@@ -321,15 +381,29 @@ const App = {
                 continue;
             }
             
-            // Check if word pair already exists
+            // Check if word pair already exists in current database
             const existingWord = this.words.find(w => 
+                w.databaseId === this.currentDatabase &&
+                ((w.originalText.toLowerCase() === english.toLowerCase() && 
+                  w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
+                 (w.originalText.toLowerCase() === spanish.toLowerCase() && 
+                  w.translatedText.toLowerCase() === english.toLowerCase()))
+            );
+            
+            if (existingWord) {
+                skippedCount++;
+                continue;
+            }
+            
+            // Check if word pair already exists in learned words
+            const existingLearnedWord = this.learnedWords.find(w => 
                 (w.originalText.toLowerCase() === english.toLowerCase() && 
                  w.translatedText.toLowerCase() === spanish.toLowerCase()) ||
                 (w.originalText.toLowerCase() === spanish.toLowerCase() && 
                  w.translatedText.toLowerCase() === english.toLowerCase())
             );
             
-            if (existingWord) {
+            if (existingLearnedWord) {
                 skippedCount++;
                 continue;
             }
@@ -491,12 +565,22 @@ const App = {
         if (!wordsContainer) return;
         
         // Filter words by current database and search query
-        const filteredWords = this.words.filter(word => 
-            word.databaseId === this.currentDatabase && (
+        let filteredWords;
+        if (this.currentDatabase === 'learned-words') {
+            // Search in learned words
+            filteredWords = this.learnedWords.filter(word => 
                 word.originalText.toLowerCase().includes(query.toLowerCase()) ||
                 word.translatedText.toLowerCase().includes(query.toLowerCase())
-            )
-        );
+            );
+        } else {
+            // Search in regular words
+            filteredWords = this.words.filter(word => 
+                word.databaseId === this.currentDatabase && (
+                    word.originalText.toLowerCase().includes(query.toLowerCase()) ||
+                    word.translatedText.toLowerCase().includes(query.toLowerCase())
+                )
+            );
+        }
         
         this.displayWords(filteredWords);
     },
@@ -507,7 +591,16 @@ const App = {
         if (!wordsContainer) return;
         
         // Filter words by current database if no specific words provided
-        const wordsToShow = words || this.words.filter(word => word.databaseId === this.currentDatabase);
+        let wordsToShow;
+        if (words) {
+            wordsToShow = words;
+        } else if (this.currentDatabase === 'learned-words') {
+            // Use learned words for this database
+            wordsToShow = this.learnedWords;
+        } else {
+            // Filter by current database
+            wordsToShow = this.words.filter(word => word.databaseId === this.currentDatabase);
+        }
         
         if (wordsToShow.length === 0) {
             wordsContainer.innerHTML = '<div class="no-words-message">No words in this database</div>';
@@ -534,7 +627,8 @@ const App = {
                                 <span class="points-value">${word.counter || 0}</span>
                             </td>
                             <td class="action-cell">
-                                <button class="delete-btn" onclick="App.deleteWord('${word.id}')">🗑️</button>
+                                <button class="move-btn" onclick="App.moveWordToDatabase('${word.id}')" title="Move to another database">📁</button>
+                                <button class="delete-btn" onclick="${this.currentDatabase === 'learned-words' ? 'App.deleteLearnedWord' : 'App.deleteWord'}('${word.id}')" title="Delete word">🗑️</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -559,6 +653,202 @@ const App = {
         }
     },
     
+    // Move word to another database
+    async moveWordToDatabase(wordId) {
+        let word;
+        const idToFind = parseFloat(wordId);
+        
+        // Check if it's a learned word first
+        if (this.currentDatabase === 'learned-words') {
+            word = this.learnedWords.find(w => w.id === idToFind);
+        } else {
+            word = this.words.find(w => w.id === idToFind);
+        }
+        
+        if (!word) {
+            this.showNotification('Word not found', 'error');
+            return;
+        }
+        
+        // Get available databases (excluding current one and learned words)
+        const availableDatabases = this.databases.filter(db => 
+            db.id !== this.currentDatabase && db.id !== 'learned-words' && !db.isSystem
+        );
+        
+        if (availableDatabases.length === 0) {
+            this.showNotification('No other databases available. Create a new database first.', 'error');
+            return;
+        }
+        
+        // Create a modal for database selection
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Select target database:</h3>
+                <select id="target-database-select" class="database-select">
+                    <option value="">Choose a database...</option>
+                    ${availableDatabases.map(db => `<option value="${db.id}">${db.name}</option>`).join('')}
+                </select>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                    <button class="btn-confirm" onclick="App.confirmMoveWord('${wordId}')">Move</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Store the word ID for later use
+        this.pendingMoveWordId = wordId;
+        
+        return;
+    },
+    
+    // Confirm move word to selected database
+    async confirmMoveWord(wordId) {
+        const targetDatabaseId = document.getElementById('target-database-select').value;
+        if (!targetDatabaseId) {
+            this.showNotification('Please select a target database', 'error');
+            return;
+        }
+        
+        const targetDatabase = this.databases.find(db => db.id === targetDatabaseId);
+        if (!targetDatabase) {
+            this.showNotification('Target database not found', 'error');
+            return;
+        }
+        
+        // Find the word
+        let word;
+        const idToFind = parseFloat(wordId);
+        
+        if (this.currentDatabase === 'learned-words') {
+            word = this.learnedWords.find(w => w.id === idToFind);
+        } else {
+            word = this.words.find(w => w.id === idToFind);
+        }
+        
+        if (!word) {
+            this.showNotification('Word not found', 'error');
+            return;
+        }
+        
+        // Update word's database and reset counter
+        word.databaseId = targetDatabaseId;
+        word.counter = 0;
+        
+        // If it was a learned word, remove it from learned words and add to regular words
+        if (this.currentDatabase === 'learned-words') {
+            this.learnedWords = this.learnedWords.filter(w => w.id !== idToFind);
+            this.words.push(word);
+        }
+        
+        await this.saveData();
+        this.updateUI();
+        this.showNotification(`Word moved to "${targetDatabase.name}" successfully!`, 'success');
+        
+        // Remove modal
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+    },
+    
+    // Move learned word to another database
+    async moveLearnedWordToDatabase(wordId) {
+        const word = this.learnedWords.find(w => w.id === parseFloat(wordId));
+        if (!word) {
+            this.showNotification('Word not found', 'error');
+            return;
+        }
+        
+        // Get available databases (excluding learned words)
+        const availableDatabases = this.databases.filter(db => 
+            db.id !== 'learned-words' && !db.isSystem
+        );
+        
+        if (availableDatabases.length === 0) {
+            this.showNotification('No other databases available. Create a new database first.', 'error');
+            return;
+        }
+        
+        // Create a modal for database selection
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Select target database:</h3>
+                <select id="target-database-select" class="database-select">
+                    <option value="">Choose a database...</option>
+                    ${availableDatabases.map(db => `<option value="${db.id}">${db.name}</option>`).join('')}
+                </select>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                    <button class="btn-confirm" onclick="App.confirmMoveLearnedWord('${wordId}')">Move</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Store the word ID for later use
+        this.pendingMoveLearnedWordId = wordId;
+    },
+    
+    // Confirm move learned word to selected database
+    async confirmMoveLearnedWord(wordId) {
+        const targetDatabaseId = document.getElementById('target-database-select').value;
+        if (!targetDatabaseId) {
+            this.showNotification('Please select a target database', 'error');
+            return;
+        }
+        
+        const targetDatabase = this.databases.find(db => db.id === targetDatabaseId);
+        if (!targetDatabase) {
+            this.showNotification('Target database not found', 'error');
+            return;
+        }
+        
+        // Find the word
+        const word = this.learnedWords.find(w => w.id === parseFloat(wordId));
+        if (!word) {
+            this.showNotification('Word not found', 'error');
+            return;
+        }
+        
+        // Update word's database and reset counter
+        word.databaseId = targetDatabaseId;
+        word.counter = 0;
+        word.score = 0;
+        
+        // Remove from learned words and add to regular words
+        this.learnedWords = this.learnedWords.filter(w => w.id !== parseFloat(wordId));
+        this.words.push(word);
+        
+        await this.saveData();
+        this.updateUI();
+        this.showNotification(`Word moved to "${targetDatabase.name}" successfully!`, 'success');
+        
+        // Remove modal
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+    },
+
+    // Delete learned word
+    async deleteLearnedWord(wordId) {
+        if (confirm('Are you sure you want to delete this learned word?')) {
+            // Convert wordId to number for proper comparison
+            const idToDelete = parseFloat(wordId);
+            this.learnedWords = this.learnedWords.filter(w => w.id !== idToDelete);
+            await this.saveData();
+            this.updateUI();
+            this.showNotification('Learned word deleted successfully!', 'success');
+        }
+    },
+    
     // Delete word
     async deleteWord(wordId) {
         if (confirm('Are you sure you want to delete this word?')) {
@@ -578,17 +868,31 @@ const App = {
             return;
         }
         
-        const wordsInDatabase = this.words.filter(word => word.databaseId === this.currentDatabase);
-        if (wordsInDatabase.length === 0) {
+        let wordsToDelete;
+        let wordsCount;
+        
+        if (this.currentDatabase === 'learned-words') {
+            wordsToDelete = this.learnedWords;
+            wordsCount = this.learnedWords.length;
+        } else {
+            wordsToDelete = this.words.filter(word => word.databaseId === this.currentDatabase);
+            wordsCount = wordsToDelete.length;
+        }
+        
+        if (wordsCount === 0) {
             this.showNotification('No words to delete in this database', 'info');
             return;
         }
         
-        if (confirm(`Are you sure you want to delete ALL ${wordsInDatabase.length} words from this database? This action cannot be undone.`)) {
-            this.words = this.words.filter(word => word.databaseId !== this.currentDatabase);
+        if (confirm(`Are you sure you want to delete ALL ${wordsCount} words from this database? This action cannot be undone.`)) {
+            if (this.currentDatabase === 'learned-words') {
+                this.learnedWords = [];
+            } else {
+                this.words = this.words.filter(word => word.databaseId !== this.currentDatabase);
+            }
             await this.saveData();
             this.updateUI();
-            this.showNotification(`All ${wordsInDatabase.length} words deleted successfully!`, 'success');
+            this.showNotification(`All ${wordsCount} words deleted successfully!`, 'success');
         }
     },
     
@@ -608,13 +912,19 @@ const App = {
     
     // Start game
     startGame() {
-        if (this.words.length === 0) {
-            this.showNotification('Please add some words first!', 'error');
+        if (!this.currentDatabase) {
+            this.showNotification('Please select a database first!', 'error');
             return;
         }
         
-        this.showNotification('Game will start soon!', 'info');
-        // Game logic will be implemented in the game module
+        const wordsInDatabase = this.words.filter(word => word.databaseId === this.currentDatabase);
+        if (wordsInDatabase.length === 0) {
+            this.showNotification('No words in this database!', 'error');
+            return;
+        }
+        
+        // Use GameModule to start the game
+        GameModule.startGame();
     },
     
     
@@ -625,6 +935,11 @@ const App = {
         this.currentDatabase = database;
         await this.saveData();
         this.updateUI();
+        
+        // If game is active, restart it with new database
+        if (GameModule.gameActive) {
+            GameModule.restartGame();
+        }
     },
     
     // Create new database
@@ -712,8 +1027,13 @@ const App = {
         // Update word count
         const wordCountElements = document.querySelectorAll('.word-count');
         wordCountElements.forEach(element => {
-            const currentDBWords = this.words.filter(word => word.databaseId === this.currentDatabase);
-            element.textContent = `All words (${currentDBWords.length})`;
+            let wordCount;
+            if (this.currentDatabase === 'learned-words') {
+                wordCount = this.learnedWords.length;
+            } else {
+                wordCount = this.words.filter(word => word.databaseId === this.currentDatabase).length;
+            }
+            element.textContent = `All words (${wordCount})`;
         });
         
         // Update learned words count
@@ -754,7 +1074,7 @@ const App = {
         // Enable/disable delete button based on database selection
         const deleteButtons = document.querySelectorAll('.btn-delete');
         deleteButtons.forEach(btn => {
-            if (this.currentDatabase && this.databases.length > 0) {
+            if (this.currentDatabase && this.databases.length > 0 && this.currentDatabase !== 'learned-words') {
                 btn.disabled = false;
             } else {
                 btn.disabled = true;
@@ -772,17 +1092,35 @@ const App = {
             return;
         }
         
-        const learnedHTML = this.learnedWords.map(word => `
-            <div class="learned-word-card">
-                <div class="learned-word-content">
-                    <div class="learned-word-english">${word.originalText}</div>
-                    <div class="learned-word-spanish">${word.translatedText}</div>
-                </div>
-                <div class="learned-word-score">Score: ${word.score}</div>
+        // Create a table format for learned words
+        const learnedHTML = `
+            <div class="learned-words-table">
+                <table class="words-table">
+                    <thead>
+                        <tr>
+                            <th>Spanish</th>
+                            <th>English</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.learnedWords
+                            .sort((a, b) => new Date(b.learnedAt || b.createdAt) - new Date(a.learnedAt || a.createdAt))
+                            .map(word => `
+                            <tr class="learned-word-row">
+                                <td class="spanish-word">${word.translatedText}</td>
+                                <td class="english-word">${word.originalText}</td>
+                                <td class="points-cell">
+                                    <span class="points-value">${word.score || 15}</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
-        `).join('');
+        `;
         
-        learnedContent.innerHTML = `<div class="learned-words-list">${learnedHTML}</div>`;
+        learnedContent.innerHTML = learnedHTML;
     },
     
     

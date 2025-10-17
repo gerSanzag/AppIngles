@@ -1,1 +1,67 @@
-[]
+[
+  {
+    "id": 1760739271311.0947,
+    "originalText": "cat",
+    "translatedText": "gato",
+    "detectedLanguage": "en",
+    "databaseId": "1760733668071",
+    "score": 0,
+    "attempts": 0,
+    "lastPracticed": null,
+    "createdAt": "2025-10-17T22:14:31.311Z",
+    "counter": 15,
+    "learnedAt": "2025-10-17T22:15:21.342Z"
+  },
+  {
+    "id": 1760739096194.8662,
+    "originalText": "sun",
+    "translatedText": "sol",
+    "detectedLanguage": "en",
+    "databaseId": "1760733668071",
+    "score": 0,
+    "attempts": 0,
+    "lastPracticed": null,
+    "createdAt": "2025-10-17T22:11:36.194Z",
+    "counter": 15,
+    "learnedAt": "2025-10-17T22:12:25.561Z"
+  },
+  {
+    "id": 1760733684744.8586,
+    "originalText": "bird",
+    "translatedText": "Ave",
+    "detectedLanguage": "en",
+    "databaseId": "1760733668071",
+    "score": 0,
+    "attempts": 0,
+    "lastPracticed": null,
+    "createdAt": "2025-10-17T20:41:24.744Z",
+    "counter": 15,
+    "learnedAt": "2025-10-17T22:05:59.183Z"
+  },
+  {
+    "id": 1760725209605,
+    "originalText": "hello",
+    "translatedText": "hola",
+    "detectedLanguage": "en",
+    "databaseId": "learned-words",
+    "score": 15,
+    "attempts": 3,
+    "lastPracticed": "2025-10-17T20:30:00.000Z",
+    "createdAt": "2025-10-17T18:20:09.603Z",
+    "counter": 15,
+    "learnedAt": "2025-10-17T20:30:00.000Z"
+  },
+  {
+    "id": 1760725209605,
+    "originalText": "goodbye",
+    "translatedText": "adiós",
+    "detectedLanguage": "en",
+    "databaseId": "learned-words",
+    "score": 18,
+    "attempts": 2,
+    "lastPracticed": "2025-10-17T20:25:00.000Z",
+    "createdAt": "2025-10-17T18:25:09.603Z",
+    "counter": 18,
+    "learnedAt": "2025-10-17T20:25:00.000Z"
+  }
+]
