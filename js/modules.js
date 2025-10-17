@@ -85,7 +85,7 @@ const GameModule = {
         // Update question display
         const questionWord = document.getElementById('question-word');
         if (questionWord) {
-            questionWord.textContent = this.currentQuestion.spanish;
+            questionWord.textContent = this.currentQuestion.translatedText;
         }
         
         // Clear previous feedback
@@ -108,7 +108,7 @@ const GameModule = {
         if (!answerInput || !this.currentQuestion) return;
         
         const userAnswer = answerInput.value.trim().toLowerCase();
-        const correctAnswer = this.currentQuestion.english.toLowerCase();
+        const correctAnswer = this.currentQuestion.originalText.toLowerCase();
         
         const feedback = document.getElementById('game-feedback');
         if (!feedback) return;
@@ -140,7 +140,7 @@ const GameModule = {
             this.currentStreak = 0;
             
             feedback.className = 'game-feedback feedback-incorrect';
-            feedback.textContent = `Incorrect! The answer was: "${this.currentQuestion.english}" (-5 points)`;
+            feedback.textContent = `Incorrect! The answer was: "${this.currentQuestion.originalText}" (-5 points)`;
             feedback.style.display = 'block';
             
             this.currentQuestion.attempts += 1;
@@ -165,7 +165,7 @@ const GameModule = {
         const feedback = document.getElementById('game-feedback');
         if (feedback) {
             feedback.className = 'game-feedback feedback-incorrect';
-            feedback.textContent = `Skipped! The answer was: "${this.currentQuestion.english}"`;
+            feedback.textContent = `Skipped! The answer was: "${this.currentQuestion.originalText}"`;
             feedback.style.display = 'block';
         }
         
@@ -265,13 +265,6 @@ const DatabaseModule = {
         }
     },
     
-    // Debug database
-    debugDatabase() {
-        console.log('Current words:', App.words);
-        console.log('Learned words:', App.learnedWords);
-        console.log('Game stats:', App.gameStats);
-        App.showNotification('Debug information logged to console', 'info');
-    }
 };
 
 // Import/Export Module
@@ -296,8 +289,8 @@ const ImportModule = {
         words.forEach(word => {
             // Check if word already exists
             const existingWord = App.words.find(w => 
-                w.english.toLowerCase() === word.toLowerCase() || 
-                w.spanish.toLowerCase() === word.toLowerCase()
+                w.originalText.toLowerCase() === word.toLowerCase() || 
+                w.translatedText.toLowerCase() === word.toLowerCase()
             );
             
             if (!existingWord) {
@@ -337,7 +330,7 @@ const ImportModule = {
             return;
         }
         
-        const wordList = App.words.map(word => word.english).join('\n');
+        const wordList = App.words.map(word => word.originalText).join('\n');
         const blob = new Blob([wordList], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         

@@ -13,53 +13,107 @@ const App = {
         streak: 0
     },
     
+    // API base URL
+    apiBaseUrl: 'http://localhost:3000/api',
+    
     // Initialize the app
-    init() {
-        this.loadData();
+    async init() {
+        await this.loadData();
         this.setupEventListeners();
+        this.setupAutoSave();
         this.updateUI();
     },
     
-    // Load data from localStorage
-    loadData() {
-        const savedWords = localStorage.getItem('englishApp_words');
-        const savedLearned = localStorage.getItem('englishApp_learned');
-        const savedStats = localStorage.getItem('englishApp_stats');
-        const savedDatabases = localStorage.getItem('englishApp_databases');
-        const savedCurrentDB = localStorage.getItem('englishApp_currentDatabase');
-        
-        if (savedWords) {
-            this.words = JSON.parse(savedWords);
-        }
-        
-        if (savedLearned) {
-            this.learnedWords = JSON.parse(savedLearned);
-        }
-        
-        if (savedStats) {
-            this.gameStats = { ...this.gameStats, ...JSON.parse(savedStats) };
-        }
-        
-        if (savedDatabases) {
-            this.databases = JSON.parse(savedDatabases);
-        } else {
-            // Start with empty databases
-            this.databases = [];
-            this.currentDatabase = '';
-        }
-        
-        if (savedCurrentDB) {
-            this.currentDatabase = savedCurrentDB;
+    // Load data from server
+    async loadData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/data`);
+            if (response.ok) {
+                const data = await response.json();
+                this.words = data.words || [];
+                this.learnedWords = data.learnedWords || [];
+                this.databases = data.databases || [];
+                this.currentDatabase = data.currentDatabase || '';
+                this.gameStats = { ...this.gameStats, ...(data.gameStats || {}) };
+                
+                console.log('✅ Data loaded from server successfully');
+            } else {
+                console.warn('⚠️ Could not load data from server, using defaults');
+                this.initializeDefaults();
+            }
+        } catch (error) {
+            console.error('❌ Error loading data from server:', error);
+            this.initializeDefaults();
+            this.showNotification('Could not connect to server. Using offline mode.', 'error');
         }
     },
     
-    // Save data to localStorage
-    saveData() {
-        localStorage.setItem('englishApp_words', JSON.stringify(this.words));
-        localStorage.setItem('englishApp_learned', JSON.stringify(this.learnedWords));
-        localStorage.setItem('englishApp_stats', JSON.stringify(this.gameStats));
-        localStorage.setItem('englishApp_databases', JSON.stringify(this.databases));
-        localStorage.setItem('englishApp_currentDatabase', this.currentDatabase);
+    // Initialize default values
+    initializeDefaults() {
+        this.words = [];
+        this.learnedWords = [];
+        this.databases = [];
+        this.currentDatabase = '';
+        this.gameStats = {
+            score: 0,
+            correct: 0,
+            incorrect: 0,
+            streak: 0
+        };
+    },
+    
+    // Save data to server
+    async saveData() {
+        try {
+            const dataToSave = {
+                words: this.words,
+                learnedWords: this.learnedWords,
+                databases: this.databases,
+                gameStats: this.gameStats,
+                currentDatabase: this.currentDatabase
+            };
+            
+            const response = await fetch(`${this.apiBaseUrl}/data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSave)
+            });
+            
+            if (response.ok) {
+                console.log('✅ Data saved to server successfully');
+                return true;
+            } else {
+                console.error('❌ Failed to save data to server');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error saving data to server:', error);
+            return false;
+        }
+    },
+    
+    // Setup auto-save functionality
+    setupAutoSave() {
+        // Auto-save on page unload
+        window.addEventListener('beforeunload', () => {
+            this.saveData();
+        });
+        
+        // Auto-save on visibility change (tab switching)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.saveData();
+            }
+        });
+        
+        // Auto-save on navigation
+        const originalNavigateToModule = Navigation.navigateToModule;
+        Navigation.navigateToModule = (moduleName) => {
+            this.saveData(); // Save before navigation
+            originalNavigateToModule(moduleName);
+        };
     },
     
     // Setup event listeners
@@ -148,11 +202,6 @@ const App = {
             startGameBtn.addEventListener('click', () => this.startGame());
         }
         
-        // Import words functionality
-        const wordListTextarea = document.getElementById('word-list');
-        if (wordListTextarea) {
-            wordListTextarea.addEventListener('input', () => this.handleWordListImport());
-        }
         
         // Delete all words functionality
         const deleteAllBtn = document.getElementById('delete-all-btn');
@@ -162,52 +211,6 @@ const App = {
         
     },
     
-    // Handle word input
-    handleWordInput(value) {
-        const languageDetection = document.querySelector('.language-detection');
-        if (languageDetection) {
-            if (value.trim()) {
-                languageDetection.textContent = 'DETECTING LANGUAGE...';
-                // Simple language detection based on characters
-                this.simpleLanguageDetection(value);
-            } else {
-                languageDetection.textContent = 'DETECTING LANGUAGE...';
-            }
-        }
-        
-        // Clear translation results when input changes
-        this.clearTranslations();
-    },
-    
-    // Clear translation results
-    clearTranslations() {
-        const translationResults = document.getElementById('translation-results');
-        if (translationResults) {
-            translationResults.style.display = 'none';
-        }
-        this.selectedTranslation = null;
-    },
-    
-    // Simple language detection
-    simpleLanguageDetection(text) {
-        const languageDetection = document.querySelector('.language-detection');
-        if (!languageDetection) return;
-        
-        // Simple heuristics for language detection
-        const hasAccents = /[áéíóúñü]/i.test(text);
-        const hasEnglishChars = /[a-zA-Z]/.test(text);
-        
-        if (hasAccents) {
-            languageDetection.textContent = 'Language detected: Spanish';
-            languageDetection.style.color = '#28a745';
-        } else if (hasEnglishChars) {
-            languageDetection.textContent = 'Language detected: English';
-            languageDetection.style.color = '#007bff';
-        } else {
-            languageDetection.textContent = 'DETECTING LANGUAGE...';
-            languageDetection.style.color = '#6c757d';
-        }
-    },
     
     // Add manual word (Spanish - English)
     async addManualWord() {
@@ -255,7 +258,7 @@ const App = {
         };
         
         this.words.push(newWord);
-        this.saveData();
+        await this.saveData();
         this.updateUI();
         
         // Clear inputs
@@ -350,7 +353,7 @@ const App = {
         }
         
         // Save data and update UI
-        this.saveData();
+        await this.saveData();
         this.updateUI();
         
         // Clear the textarea
@@ -481,53 +484,6 @@ const App = {
     },
     
     
-    // Display translations in the UI
-    displayTranslations(translations) {
-        const translationResults = document.getElementById('translation-results');
-        const translationList = document.getElementById('translation-list');
-        
-        if (!translationResults || !translationList) return;
-        
-        // Clear previous translations
-        translationList.innerHTML = '';
-        
-        // Add each translation
-        translations.forEach((translation, index) => {
-            const translationItem = document.createElement('div');
-            translationItem.className = 'translation-item';
-            translationItem.innerHTML = `
-                <div class="translation-text">${translation.text}</div>
-                <div class="translation-language">${translation.detectedSourceLanguage}</div>
-            `;
-            
-            // Add click handler to select translation
-            translationItem.addEventListener('click', () => {
-                this.selectTranslation(translation, index);
-            });
-            
-            translationList.appendChild(translationItem);
-        });
-        
-        // Show translation results
-        translationResults.style.display = 'block';
-    },
-    
-    // Select a translation
-    selectTranslation(translation, index) {
-        // Remove previous selections
-        document.querySelectorAll('.translation-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        
-        // Select current translation
-        const translationItems = document.querySelectorAll('.translation-item');
-        if (translationItems[index]) {
-            translationItems[index].classList.add('selected');
-        }
-        
-        // Store selected translation for adding
-        this.selectedTranslation = translation;
-    },
     
     // Search words
     searchWords(query) {
@@ -572,8 +528,8 @@ const App = {
                 <tbody>
                     ${wordsToShow.map((word) => `
                         <tr class="word-row">
-                            <td class="spanish-word">${word.originalText}</td>
-                            <td class="english-word">${word.translatedText}</td>
+                            <td class="spanish-word">${word.translatedText}</td>
+                            <td class="english-word">${word.originalText}</td>
                             <td class="points-cell">
                                 <span class="points-value">${word.counter || 0}</span>
                             </td>
@@ -590,33 +546,33 @@ const App = {
     },
     
     // Edit word
-    editWord(wordId) {
+    async editWord(wordId) {
         const word = this.words.find(w => w.id === wordId);
         if (!word) return;
         
         const newOriginal = prompt('Edit original word:', word.originalText);
         if (newOriginal && newOriginal.trim()) {
             word.originalText = newOriginal.trim();
-            this.saveData();
+            await this.saveData();
             this.updateUI();
             this.showNotification('Word updated successfully!', 'success');
         }
     },
     
     // Delete word
-    deleteWord(wordId) {
+    async deleteWord(wordId) {
         if (confirm('Are you sure you want to delete this word?')) {
             // Convert wordId to number for proper comparison
             const idToDelete = parseFloat(wordId);
             this.words = this.words.filter(w => w.id !== idToDelete);
-            this.saveData();
+            await this.saveData();
             this.updateUI();
             this.showNotification('Word deleted successfully!', 'success');
         }
     },
     
     // Delete all words from current database
-    deleteAllWords() {
+    async deleteAllWords() {
         if (!this.currentDatabase) {
             this.showNotification('Please select a database first', 'error');
             return;
@@ -630,7 +586,7 @@ const App = {
         
         if (confirm(`Are you sure you want to delete ALL ${wordsInDatabase.length} words from this database? This action cannot be undone.`)) {
             this.words = this.words.filter(word => word.databaseId !== this.currentDatabase);
-            this.saveData();
+            await this.saveData();
             this.updateUI();
             this.showNotification(`All ${wordsInDatabase.length} words deleted successfully!`, 'success');
         }
@@ -638,14 +594,14 @@ const App = {
     
     
     // Mark word as learned
-    markAsLearned(wordId) {
+    async markAsLearned(wordId) {
         const word = this.words.find(w => w.id === wordId);
         if (!word) return;
         
         word.score = 15; // Minimum score to be considered learned
         this.learnedWords.push(word);
         this.words = this.words.filter(w => w.id !== wordId);
-        this.saveData();
+        await this.saveData();
         this.updateUI();
         this.showNotification('Word marked as learned!', 'success');
     },
@@ -661,123 +617,18 @@ const App = {
         // Game logic will be implemented in the game module
     },
     
-    // Handle word list import
-    handleWordListImport() {
-        const wordListTextarea = document.getElementById('word-list');
-        const words = wordListTextarea.value.split('\n').filter(word => word.trim());
-        
-        if (words.length > 0) {
-            this.showNotification(`Ready to import ${words.length} words`, 'info');
-        }
-    },
     
-    // Translate word list
-    translateWordList() {
-        const wordListTextarea = document.getElementById('word-list');
-        const words = wordListTextarea.value.split('\n').filter(word => word.trim());
-        
-        if (words.length === 0) {
-            this.showNotification('Please enter some words to translate', 'error');
-            return;
-        }
-        
-        // Placeholder for Google Translate API
-        this.showNotification(`Translation feature will translate ${words.length} words`, 'info');
-    },
     
-    // Add word list
-    async addWordList() {
-        const wordListTextarea = document.getElementById('word-list');
-        const words = wordListTextarea.value.split('\n').filter(word => word.trim());
-        
-        if (words.length === 0) {
-            this.showNotification('Please enter some words to add', 'error');
-            return;
-        }
-        
-        if (!this.currentDatabase) {
-            this.showNotification('Please select a database first', 'error');
-            return;
-        }
-        
-        // Check if API key is set
-        if (!TranslateService.hasApiKey()) {
-            this.showNotification('Please configure API Key first. Click "SETUP API KEY" button.', 'error');
-            return;
-        }
-        
-        try {
-            this.showNotification(`Processing ${words.length} words...`, 'info');
-            
-            let totalAdded = 0;
-            let totalSkipped = 0;
-            
-            for (const word of words) {
-                try {
-                    const translations = await TranslateService.getMultipleTranslations(word);
-                    
-                    if (translations && translations.length > 0) {
-                        for (const translation of translations) {
-                            // Check if this specific translation already exists
-                            const existingWord = this.words.find(w => 
-                                w.originalText.toLowerCase() === word.toLowerCase() && 
-                                w.translatedText.toLowerCase() === translation.text.toLowerCase() &&
-                                w.databaseId === this.currentDatabase
-                            );
-                            
-                            if (!existingWord) {
-                                const newWord = {
-                                    id: Date.now() + Math.random(),
-                                    originalText: word,
-                                    translatedText: translation.text,
-                                    detectedLanguage: translation.detectedSourceLanguage,
-                                    databaseId: this.currentDatabase,
-                                    score: 0,
-                                    attempts: 0,
-                                    lastPracticed: null,
-                                    createdAt: new Date().toISOString()
-                                };
-                                
-                                this.words.push(newWord);
-                                totalAdded++;
-                            } else {
-                                totalSkipped++;
-                            }
-                        }
-                    } else {
-                        totalSkipped++;
-                    }
-                } catch (error) {
-                    console.error(`Error translating word "${word}":`, error);
-                    totalSkipped++;
-                }
-            }
-            
-            this.saveData();
-            this.updateUI();
-            
-            this.showNotification(
-                `Import completed! ${totalAdded} translations added, ${totalSkipped} skipped.`, 
-                'success'
-            );
-            
-            // Clear textarea
-            wordListTextarea.value = '';
-            
-        } catch (error) {
-            console.error('Add word list error:', error);
-            this.showNotification('Failed to process word list: ' + error.message, 'error');
-        }
-    },
     
     // Change database
-    changeDatabase(database) {
+    async changeDatabase(database) {
         this.currentDatabase = database;
+        await this.saveData();
         this.updateUI();
     },
     
     // Create new database
-    createDatabase() {
+    async createDatabase() {
         const name = prompt('Enter database name:');
         if (!name || name.trim() === '') {
             this.showNotification('Database name cannot be empty', 'error');
@@ -805,14 +656,14 @@ const App = {
         
         this.databases.push(newDatabase);
         this.currentDatabase = newDatabase.id;
-        this.saveData();
+        await this.saveData();
         this.updateUI();
         
         this.showNotification(`Database "${name}" created successfully!`, 'success');
     },
     
     // Delete database
-    deleteDatabase() {
+    async deleteDatabase() {
         if (!this.currentDatabase) {
             this.showNotification('No database selected', 'error');
             return;
@@ -846,7 +697,7 @@ const App = {
                 this.currentDatabase = '';
             }
             
-            this.saveData();
+            await this.saveData();
             this.updateUI();
             
             this.showNotification(`Database "${currentDB.name}" deleted successfully!`, 'success');
@@ -924,8 +775,8 @@ const App = {
         const learnedHTML = this.learnedWords.map(word => `
             <div class="learned-word-card">
                 <div class="learned-word-content">
-                    <div class="learned-word-english">${word.english}</div>
-                    <div class="learned-word-spanish">${word.spanish}</div>
+                    <div class="learned-word-english">${word.originalText}</div>
+                    <div class="learned-word-spanish">${word.translatedText}</div>
                 </div>
                 <div class="learned-word-score">Score: ${word.score}</div>
             </div>

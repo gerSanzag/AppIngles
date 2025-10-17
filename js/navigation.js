@@ -121,39 +121,3 @@ function navigateToModule(moduleName) {
     Navigation.navigateToModule(moduleName);
 }
 
-// Debug function to check module visibility
-function debugModules() {
-    const modules = document.querySelectorAll('.module');
-    console.log('=== MODULE DEBUG ===');
-    modules.forEach(module => {
-        console.log(`Module ${module.id}:`, {
-            display: module.style.display,
-            classList: module.classList.toString(),
-            visible: module.offsetParent !== null,
-            computedDisplay: window.getComputedStyle(module).display
-        });
-    });
-    console.log('Current module:', App.currentModule);
-    console.log('Words count:', App.words.length);
-}
-
-// Emergency function to force show landing page
-function forceShowLanding() {
-    console.log('Force showing landing page...');
-    const landingModule = document.getElementById('landing');
-    if (landingModule) {
-        // Hide all modules
-        const modules = document.querySelectorAll('.module');
-        modules.forEach(module => {
-            module.classList.remove('active');
-            module.style.display = 'none';
-        });
-        
-        // Show landing
-        landingModule.classList.add('active');
-        landingModule.style.display = 'block';
-        App.currentModule = 'landing';
-        
-        console.log('Landing page forced to show');
-    }
-}
