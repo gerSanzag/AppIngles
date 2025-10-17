@@ -2,7 +2,6 @@
 const Navigation = {
     // Navigate to a specific module
     navigateToModule(moduleName) {
-        console.log('Navigating to:', moduleName);
         
         // Hide all modules
         const modules = document.querySelectorAll('.module');
@@ -18,13 +17,11 @@ const Navigation = {
             targetModule.style.display = 'block';
             App.currentModule = moduleName;
             
-            console.log('Module activated:', moduleName);
-            
             // Update UI for the new module
             App.updateUI();
             
             // Module-specific initialization
-            this.initializeModule(moduleName);
+            Navigation.initializeModule(moduleName);
         } else {
             console.error('Module not found:', moduleName);
         }
@@ -54,7 +51,6 @@ const Navigation = {
     // Initialize landing page
     initializeLanding() {
         // Landing page is already set up in HTML
-        console.log('Landing page initialized');
     },
     
     // Initialize add words module

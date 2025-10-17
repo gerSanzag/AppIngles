@@ -68,8 +68,7 @@ AppIngles/
 ├── js/                  # 📁 Código JavaScript
 │   ├── app.js          # Lógica principal
 │   ├── modules.js      # Módulos del juego
-│   ├── navigation.js   # Sistema de navegación
-│   └── translate.js    # Servicio de traducción (simplificado)
+│   └── navigation.js   # Sistema de navegación
 ├── styles/             # 📁 Estilos CSS
 │   ├── main.css        # Estilos principales
 │   ├── components.css  # Componentes UI
@@ -123,7 +122,6 @@ Por defecto, el servidor corre en el puerto 3000. Para cambiarlo:
 - **`app.js`**: Lógica principal y gestión de datos
 - **`modules.js`**: Módulos del juego y base de datos
 - **`navigation.js`**: Sistema de navegación entre módulos
-- **`translate.js`**: Servicio de traducción (simplificado)
 
 ### API Local
 - **GET `/api/data`**: Obtener todos los datos
