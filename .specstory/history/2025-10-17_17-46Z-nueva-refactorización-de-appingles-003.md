@@ -1750,3 +1750,361 @@ La aplicación está más limpia, eficiente y fácil de mantener. El servidor si
 
 ---
 
+_**User (2025-10-17 16:32Z)**_
+
+Ok, todo funcionando; fenomenal.
+
+Haz un push.
+Guarda solo lo necesario.
+El mensaje que sea muy explicito del funcionamiento actual y en español
+Incluye la documentación de spectory.
+
+Luego haz un merge con main.
+
+---
+
+_**Assistant (default)**_
+
+Perfecto! Voy a hacer el push con un mensaje explicativo y luego el merge con main. Primero voy a revisar qué archivos necesitamos incluir en el commit.
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git status
+```
+
+```
+En la rama refactorizacion
+Tu rama está actualizada con 'origin/refactorizacion'.
+
+Cambios no rastreados para el commit:
+  (usa "git add/rm <archivo>..." para actualizar a lo que se le va a hacer commit)
+  (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
+	modificados:     .specstory/history/2025-10-16_16-23Z-creacion-de-appingles-001.md
+	borrados:        .specstory/history/2025-10-16_19-41Z-revisar-documento-de-appling.md
+	borrados:        API_KEY_SETUP.md
+	modificados:     index.html
+	modificados:     js/app.js
+	modificados:     js/modules.js
+	modificados:     js/navigation.js
+	borrados:        js/translate.js
+
+Archivos sin seguimiento:
+  (usa "git add <archivo>..." para incluirlo a lo que será confirmado)
+	.DS_Store
+	.specstory/history/2025-10-16_19-41Z-refactorizacion-de-appingles-002.md
+	".specstory/history/2025-10-17_16-44Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+	".specstory/history/2025-10-17_17-46Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+	README.md
+	data/
+	node_modules/
+	package-lock.json
+	package.json
+	server.js
+
+sin cambios agregados al commit (usa "git add" y/o "git commit -a")
+
+```
+
+---
+
+Voy a añadir solo los archivos necesarios para el funcionamiento de la aplicación:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add index.html js/app.js js/modules.js js/navigation.js README.md package.json package-lock.json server.js data/
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git rm js/translate.js
+```
+
+```
+rm 'js/translate.js'
+
+```
+
+---
+
+Ahora voy a añadir la documentación de specstory:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add .specstory/
+```
+
+---
+
+Ahora voy a hacer el commit con un mensaje explicativo:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git commit -m "🔧 Refactorización completa: Corrección de importación de palabras y limpieza de código
+
+✅ CORRECCIONES PRINCIPALES:
+- Solucionado error de duplicación en importación de palabras desde textarea
+- Corregida separación correcta de pares español-inglés (formato: 'Español - Inglés')
+- Eliminada función duplicada addWordList() que causaba el problema
+- Corregidas referencias de propiedades en displayWords() y módulo del juego
+
+🧹 LIMPIEZA DE CÓDIGO:
+- Eliminadas 8 funciones obsoletas de traducción automática
+- Removido archivo js/translate.js (ya no necesario)
+- Eliminadas funciones de debug no utilizadas
+- Limpiadas referencias a Google Translate API
+- Código más limpio y mantenible (~150 líneas eliminadas)
+
+🎯 FUNCIONALIDADES ACTUALES:
+- ✅ Importación manual de palabras (español-inglés)
+- ✅ Importación masiva desde textarea con formato 'Español - Inglés'
+- ✅ Importación desde archivos (.txt, .csv, .md, .rtf)
+- ✅ Sistema de juego interactivo con puntuación
+- ✅ Gestión de múltiples bases de datos (hasta 20)
+- ✅ Persistencia local de datos (sin API externa)
+- ✅ Interfaz responsive y moderna
+
+📊 ESTADO: Aplicación completamente funcional y optimizada"
+```
+
+---
+
+_**User (2025-10-17 16:32Z)**_
+
+Incluye en el mensaje la logica del guardado
+
+---
+
+_**Assistant (default)**_
+
+Perfecto! Voy a hacer el commit incluyendo la lógica del guardado en el mensaje:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git commit -m "🔧 Refactorización completa: Corrección de importación de palabras y limpieza de código
+
+✅ CORRECCIONES PRINCIPALES:
+- Solucionado error de duplicación en importación de palabras desde textarea
+- Corregida separación correcta de pares español-inglés (formato: 'Español - Inglés')
+- Eliminada función duplicada addWordList() que causaba el problema
+- Corregidas referencias de propiedades en displayWords() y módulo del juego
+
+💾 LÓGICA DE GUARDADO:
+- Persistencia local en archivos JSON (sin base de datos externa)
+- Auto-guardado en cada cambio de datos
+- Guardado automático al cambiar de módulo
+- Guardado al cerrar/ocultar la aplicación
+- Datos organizados en archivos separados: words.json, databases.json, learnedWords.json, gameStats.json, currentDatabase.json
+- Sistema de respaldo automático en carpeta data/
+
+🧹 LIMPIEZA DE CÓDIGO:
+- Eliminadas 8 funciones obsoletas de traducción automática
+- Removido archivo js/translate.js (ya no necesario)
+- Eliminadas funciones de debug no utilizadas
+- Limpiadas referencias a Google Translate API
+- Código más limpio y mantenible (~150 líneas eliminadas)
+
+🎯 FUNCIONALIDADES ACTUALES:
+- ✅ Importación manual de palabras (español-inglés)
+- ✅ Importación masiva desde textarea con formato 'Español - Inglés'
+- ✅ Importación desde archivos (.txt, .csv, .md, .rtf)
+- ✅ Sistema de juego interactivo con puntuación
+- ✅ Gestión de múltiples bases de datos (hasta 20)
+- ✅ Persistencia local de datos (sin API externa)
+- ✅ Interfaz responsive y moderna
+
+📊 ESTADO: Aplicación completamente funcional y optimizada"
+```
+
+```
+[refactorizacion 99ba1c8] 🔧 Refactorización completa: Corrección de importación de palabras y limpieza de código
+ 18 files changed, 7502 insertions(+), 437 deletions(-)
+ rename .specstory/history/{2025-10-16_19-41Z-revisar-documento-de-appling.md => 2025-10-16_19-41Z-refactorizacion-de-appingles-002.md} (98%)
+ create mode 100644 ".specstory/history/2025-10-17_16-44Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+ create mode 100644 ".specstory/history/2025-10-17_17-46Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+ create mode 100644 README.md
+ create mode 100644 data/currentDatabase.json
+ create mode 100644 data/databases.json
+ create mode 100644 data/gameStats.json
+ create mode 100644 data/learnedWords.json
+ create mode 100644 data/words.json
+ delete mode 100644 js/translate.js
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 server.js
+
+```
+
+---
+
+Ahora voy a hacer el push:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git push origin refactorizacion
+```
+
+```
+To https://github.com/gerSanzag/AppIngles.git
+   f1ab349..99ba1c8  refactorizacion -> refactorizacion
+
+```
+
+---
+
+Ahora voy a cambiar a la rama main y hacer el merge:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git checkout main
+```
+
+```
+error: Los cambios locales de los siguientes archivos serán sobrescritos por checkout:
+	.specstory/history/2025-10-17_17-46Z-nueva-refactorización-de-appingles-003.md
+Por favor realiza un commit con los cambios o un stash antes de cambiar de rama.
+Abortando
+
+```
+
+---
+
+Hay un archivo sin commitear. Voy a hacer un stash para guardarlo temporalmente:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git stash
+```
+
+```
+Directorio de trabajo y estado de índice WIP on refactorizacion: 99ba1c8 🔧 Refactorización completa: Corrección de importación de palabras y limpieza de código guardados
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git checkout main
+```
+
+```
+Tu rama está actualizada con 'origin/main'.
+Cambiado a rama 'main'
+
+```
+
+---
+
+Ahora voy a hacer el merge de la rama refactorizacion:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git merge refactorizacion
+```
+
+```
+Actualizando 4a6307e..99ba1c8
+Fast-forward
+ .../2025-10-16_16-23Z-creacion-de-appingles-001.md |   40 +
+ ...0-16_19-41Z-refactorizacion-de-appingles-002.md | 8876 ++++++++++++++++++++
+ ...25-10-16_19-41Z-revisar-documento-de-appling.md | 2987 -------
+ ...eva-refactorizaci\303\263n-de-appingles-003.md" | 3617 ++++++++
+ ...eva-refactorizaci\303\263n-de-appingles-003.md" | 1752 ++++
+ README.md                                          |  162 +
+ data/currentDatabase.json                          |    1 +
+ data/databases.json                                |    7 +
+ data/gameStats.json                                |    6 +
+ data/learnedWords.json                             |    1 +
+ data/words.json                                    |  602 ++
+ index.html                                         |   73 +-
+ js/app.js                                          | 1203 +--
+ js/modules.js                                      |   21 +-
+ js/navigation.js                                   |   36 -
+ js/translate.js                                    |  124 -
+ package-lock.json                                  |  856 ++
+ package.json                                       |   17 +
+ server.js                                          |  145 +
+ styles/main.css                                    |  227 +-
+ 20 files changed, 16783 insertions(+), 3970 deletions(-)
+ create mode 100644 .specstory/history/2025-10-16_19-41Z-refactorizacion-de-appingles-002.md
+ delete mode 100644 .specstory/history/2025-10-16_19-41Z-revisar-documento-de-appling.md
+ create mode 100644 ".specstory/history/2025-10-17_16-44Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+ create mode 100644 ".specstory/history/2025-10-17_17-46Z-nueva-refactorizaci\303\263n-de-appingles-003.md"
+ create mode 100644 README.md
+ create mode 100644 data/currentDatabase.json
+ create mode 100644 data/databases.json
+ create mode 100644 data/gameStats.json
+ create mode 100644 data/learnedWords.json
+ create mode 100644 data/words.json
+ delete mode 100644 js/translate.js
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 server.js
+
+```
+
+---
+
+Ahora voy a hacer push de la rama main actualizada:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git push origin main
+```
+
+```
+To https://github.com/gerSanzag/AppIngles.git
+   4a6307e..99ba1c8  main -> main
+
+```
+
+---
+
+
+
+---
+
